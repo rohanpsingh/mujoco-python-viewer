@@ -31,5 +31,11 @@ for _ in range(100000):
     mujoco.mj_step(model, data)
     viewer.render()
 ```
+
+The render should pop up and the simulation should be running.  
+
+![frame_0000000](https://user-images.githubusercontent.com/16384313/159665433-02008fb0-32fd-4e64-ac73-69888875eedf.png)
+
+
 Press `ESC` to quit.  
 Other key bindings are shown in the overlay menu (almost similar to `mujoco-py`).
