@@ -10,11 +10,13 @@ INSTALL_REQUIRES = (
 )
 
 setup(
-    name='mujoco-viewer',
+    name='mujoco-python-viewer',
     version=VERSION,
     author='Rohan P. Singh',
     author_email='rohan565singh@gmail.com',
-    url='https://github.com/rohanpsingh/mujoco-viewer',
+    url='https://github.com/rohanpsingh/mujoco-python-viewer',
+    description='Simple viewer for MuJoCo Python',
+    long_description='Simple viewer for MuJoCo Python',
     install_requires=INSTALL_REQUIRES,
     packages=find_packages(),
     python_requires='>=3.6',
