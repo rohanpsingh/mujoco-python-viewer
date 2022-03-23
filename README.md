@@ -13,6 +13,10 @@ $ git clone https://github.com/rohanpsingh/mujoco-python-viewer
 $ cd mujoco-python-viewer
 $ pip install .
 ```
+Or, install via Pip.
+```sh
+$ pip install mujoco-python-viewer
+```
 
 # Usage
 
