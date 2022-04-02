@@ -57,6 +57,7 @@ class MujocoViewer:
         self.vopt = mujoco.MjvOption()
         self.cam = mujoco.MjvCamera()
         self.scn = mujoco.MjvScene(self.model, maxgeom=10000)
+        self.pert = mujoco.MjvPerturb()
         self.ctx = mujoco.MjrContext(
             self.model, mujoco.mjtFontScale.mjFONTSCALE_150.value)
 
@@ -341,7 +342,7 @@ class MujocoViewer:
                     self.model,
                     self.data,
                     self.vopt,
-                    mujoco.MjvPerturb(),
+                    self.pert,
                     self.cam,
                     mujoco.mjtCatBit.mjCAT_ALL.value,
                     self.scn)
