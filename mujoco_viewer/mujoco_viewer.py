@@ -173,8 +173,8 @@ class MujocoViewer:
         self._last_mouse_y = int(self._scale * ypos)
 
     def _mouse_button_callback(self, window, button, act, mods):
-        self._button_left_pressed = button==glfw.MOUSE_BUTTON_LEFT and act==glfw.PRESS
-        self._button_right_pressed = button==glfw.MOUSE_BUTTON_RIGHT and act==glfw.PRESS
+        self._button_left_pressed = button == glfw.MOUSE_BUTTON_LEFT and act == glfw.PRESS
+        self._button_right_pressed = button == glfw.MOUSE_BUTTON_RIGHT and act == glfw.PRESS
 
         x, y = glfw.get_cursor_pos(window)
         self._last_mouse_x = int(self._scale * x)
@@ -190,7 +190,7 @@ class MujocoViewer:
                 self._last_left_click_time = glfw.get_time()
 
             time_diff = (time_now - self._last_left_click_time)
-            if time_diff>0.01 and time_diff < 0.3:
+            if time_diff > 0.01 and time_diff < 0.3:
                 self._left_double_click_pressed = True
             self._last_left_click_time = time_now
 
@@ -199,12 +199,12 @@ class MujocoViewer:
                 self._last_right_click_time = glfw.get_time()
 
             time_diff = (time_now - self._last_right_click_time)
-            if time_diff>0.01 and time_diff < 0.2:
+            if time_diff > 0.01 and time_diff < 0.2:
                 self._right_double_click_pressed = True
             self._last_right_click_time = time_now
 
         # set perturbation
-        key = mods==glfw.MOD_CONTROL
+        key = mods == glfw.MOD_CONTROL
         newperturb = 0
         if key and self.pert.select > 0:
             # right: translate, left: rotate
@@ -215,7 +215,8 @@ class MujocoViewer:
 
             # perturbation onste: reset reference
             if newperturb and not self.pert.active:
-                mujoco.mjv_initPerturb(self.model, self.data, self.scn, self.pert)
+                mujoco.mjv_initPerturb(
+                    self.model, self.data, self.scn, self.pert)
         self.pert.active = newperturb
 
         # handle doubleclick
@@ -231,34 +232,45 @@ class MujocoViewer:
 
             # find geom and 3D click point, get corresponding body
             width, height = self.viewport.width, self.viewport.height
-            aspectratio = width/height
-            relx = x/width
-            rely = (self.viewport.height - y)/height
+            aspectratio = width / height
+            relx = x / width
+            rely = (self.viewport.height - y) / height
             selpnt = np.zeros((3, 1), dtype=np.float64)
             selgeom = np.zeros((1, 1), dtype=np.int32)
             selskin = np.zeros((1, 1), dtype=np.int32)
-            selbody = mujoco.mjv_select(self.model, self.data, self.vopt, aspectratio, relx, rely, self.scn, selpnt, selgeom, selskin)
+            selbody = mujoco.mjv_select(
+                self.model,
+                self.data,
+                self.vopt,
+                aspectratio,
+                relx,
+                rely,
+                self.scn,
+                selpnt,
+                selgeom,
+                selskin)
 
             # set lookat point, start tracking is requested
-            if selmode==2 or selmode==3:
+            if selmode == 2 or selmode == 3:
                 # set cam lookat
-                if selbody>=0:
+                if selbody >= 0:
                     self.cam.lookat = selpnt.flatten()
                 # switch to tracking camera if dynamic body clicked
-                if selmode==3 and selbody>0:
+                if selmode == 3 and selbody > 0:
                     self.cam.type = mujoco.mjtCamera.mjCAMERA_TRACKING
                     self.cam.trackbodyid = selbody
                     self.cam.fixedcamid = -1
             # set body selection
             else:
-                if selbody>=0:
+                if selbody >= 0:
                     # record selection
                     self.pert.select = selbody
                     self.pert.skinselect = selskin
                     # compute localpos
                     vec = selpnt.flatten() - self.data.xpos[selbody]
                     mat = self.data.xmat[selbody].reshape(3, 3)
-                    self.pert.localpos = self.data.xmat[selbody].reshape(3, 3).dot(vec)
+                    self.pert.localpos = self.data.xmat[selbody].reshape(
+                        3, 3).dot(vec)
                 else:
                     self.pert.select = 0
                     self.pert.skinselect = -1
@@ -266,7 +278,7 @@ class MujocoViewer:
             self.pert.active = 0
 
         # 3D release
-        if act==glfw.RELEASE:
+        if act == glfw.RELEASE:
             self.pert.active = 0
 
     def _scroll_callback(self, window, x_offset, y_offset):
