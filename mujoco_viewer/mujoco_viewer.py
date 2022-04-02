@@ -15,6 +15,8 @@ class MujocoViewer:
         self._gui_lock = Lock()
         self._button_left_pressed = False
         self._button_right_pressed = False
+        self._left_double_click_pressed = False
+        self._right_double_click_pressed = False
         self._last_mouse_x = 0
         self._last_mouse_y = 0
         self._paused = False
@@ -48,6 +50,8 @@ class MujocoViewer:
             self.window, self._mouse_button_callback)
         glfw.set_scroll_callback(self.window, self._scroll_callback)
         glfw.set_key_callback(self.window, self._key_callback)
+        self._last_left_click_time = None
+        self._last_right_click_time = None
 
         # create options, camera, scene, context
         self.vopt = mujoco.MjvOption()
@@ -158,6 +162,7 @@ class MujocoViewer:
         self._last_mouse_y = int(self._scale * ypos)
 
     def _mouse_button_callback(self, window, button, act, mods):
+        time_now = glfw.get_time()
         self._button_left_pressed = (glfw.get_mouse_button(
             window, glfw.MOUSE_BUTTON_LEFT) == glfw.PRESS)
         self._button_right_pressed = (glfw.get_mouse_button(
@@ -166,6 +171,30 @@ class MujocoViewer:
         x, y = glfw.get_cursor_pos(window)
         self._last_mouse_x = int(self._scale * x)
         self._last_mouse_y = int(self._scale * y)
+
+        # detect a left- or right- doubleclick
+        self._left_double_click_pressed = False
+        self._right_double_click_pressed = False
+
+        if self._button_left_pressed:
+            if self._last_left_click_time is None:
+                self._last_left_click_time = glfw.get_time()
+                return
+
+            time_diff = (time_now - self._last_left_click_time)
+            if time_diff>0.01 and time_diff < 0.3:
+                self._left_double_click_pressed = True
+            self._last_left_click_time = time_now
+
+        if self._button_right_pressed:
+            if self._last_right_click_time is None:
+                self._last_right_click_time = glfw.get_time()
+                return
+
+            time_diff = (time_now - self._last_right_click_time)
+            if time_diff>0.01 and time_diff < 0.2:
+                self._right_double_click_pressed = True
+            self._last_right_click_time = time_now
 
     def _scroll_callback(self, window, x_offset, y_offset):
         with self._gui_lock:
