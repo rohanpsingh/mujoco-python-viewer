@@ -476,6 +476,9 @@ class MujocoViewer:
         # clear markers
         self._markers[:] = []
 
+        # apply perturbation (should this come before mj_step?)
+        self.apply_perturbations()
+
     def close(self):
         glfw.terminate()
         sys.exit(0)
