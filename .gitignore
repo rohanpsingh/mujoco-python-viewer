@@ -2,3 +2,5 @@
 build/
 dist/
 *.egg-info
+mujoco_viewer/__pycache__
+mujoco_viewer/MUJOCO_LOG.TXT
