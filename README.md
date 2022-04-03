@@ -1,6 +1,6 @@
 # Viewer for MuJoCo in Python
 
-This is a `mujoco-py` style non-interactive viewer for using with the official Python bindings for MuJoCo.
+Interactive renderer to use with the official Python bindings for MuJoCo.
 
 Starting with version 2.1.2, MuJoCo comes with native Python bindings officially supported by the MuJoCo devs.  
 
