@@ -40,8 +40,10 @@ viewer.close()
 ```
 
 The render should pop up and the simulation should be running.  
+Double-click on a geom and hold `Ctrl` to apply forces (right) and torques (left).
 
-![frame_0000000](https://user-images.githubusercontent.com/16384313/159665433-02008fb0-32fd-4e64-ac73-69888875eedf.png)
+
+![ezgif-2-6758c40cdf](https://user-images.githubusercontent.com/16384313/161459985-a47e74dc-92c9-4a0b-99fc-92d1b5b04163.gif)
 
 
 Press `ESC` to quit.  
