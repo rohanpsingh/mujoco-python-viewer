@@ -11,7 +11,7 @@ Some pointers on migration are available [here](https://mujoco.readthedocs.io/en
 ```sh
 $ git clone https://github.com/rohanpsingh/mujoco-python-viewer
 $ cd mujoco-python-viewer
-$ pip install .
+$ pip install -e .
 ```
 Or, install via Pip.
 ```sh
