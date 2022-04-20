@@ -481,4 +481,3 @@ class MujocoViewer:
 
     def close(self):
         glfw.terminate()
-        sys.exit(0)
