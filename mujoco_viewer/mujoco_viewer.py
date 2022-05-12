@@ -22,6 +22,7 @@ class MujocoViewer:
         self._paused = False
         self._transparent = False
         self._contacts = False
+        self._joints = False
         self._render_every_frame = True
         self._image_idx = 0
         self._image_path = "/tmp/frame_%07d.png"
@@ -108,7 +109,9 @@ class MujocoViewer:
         elif key == glfw.KEY_C:
             self._contacts = not self._contacts
             self.vopt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = self._contacts
-            self.vopt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTFORCE] = self._contacts
+        elif key == glfw.KEY_J:
+            self._joints = not self._joints
+            self.vopt.flags[mujoco.mjtVisFlag.mjVIS_JOINT] = self._joints
         # Display coordinate frames
         elif key == glfw.KEY_E:
             self.vopt.frame = 1 - self.vopt.frame
@@ -369,6 +372,10 @@ class MujocoViewer:
             topleft,
             "[C]ontact forces",
             "On" if self._contacts else "Off")
+        add_overlay(
+            topleft,
+            "[J]oints",
+            "On" if self._joints else "Off")
         add_overlay(
             topleft,
             "T[r]ansparent",
