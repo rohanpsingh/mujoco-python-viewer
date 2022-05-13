@@ -112,6 +112,7 @@ class MujocoViewer:
         elif key == glfw.KEY_C:
             self._contacts = not self._contacts
             self.vopt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = self._contacts
+            self.vopt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTFORCE] = self._contacts
         elif key == glfw.KEY_J:
             self._joints = not self._joints
             self.vopt.flags[mujoco.mjtVisFlag.mjVIS_JOINT] = self._joints
