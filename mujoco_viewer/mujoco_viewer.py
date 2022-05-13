@@ -22,6 +22,10 @@ class MujocoViewer:
         self._paused = False
         self._transparent = False
         self._contacts = False
+        self._joints = False
+        self._wire_frame = False
+        self._inertias = False
+        self._com = False
         self._render_every_frame = True
         self._image_idx = 0
         self._image_path = "/tmp/frame_%07d.png"
@@ -108,7 +112,9 @@ class MujocoViewer:
         elif key == glfw.KEY_C:
             self._contacts = not self._contacts
             self.vopt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = self._contacts
-            self.vopt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTFORCE] = self._contacts
+        elif key == glfw.KEY_J:
+            self._joints = not self._joints
+            self.vopt.flags[mujoco.mjtVisFlag.mjVIS_JOINT] = self._joints
         # Display coordinate frames
         elif key == glfw.KEY_E:
             self.vopt.frame = 1 - self.vopt.frame
@@ -122,6 +128,18 @@ class MujocoViewer:
                 self.model.geom_rgba[:, 3] /= 5.0
             else:
                 self.model.geom_rgba[:, 3] *= 5.0
+        # Display inertia
+        elif key == glfw.KEY_I:
+            self._inertias = not self._inertias
+            self.vopt.flags[mujoco.mjtVisFlag.mjVIS_INERTIA] = self._inertias
+        # Display center of mass
+        elif key == glfw.KEY_M:
+            self._com = not self._com
+            self.vopt.flags[mujoco.mjtVisFlag.mjVIS_COM] = self._com
+        # Wireframe Rendering
+        elif key == glfw.KEY_W:
+            self._wire_frame = not self._wire_frame
+            self.scn.flags[mujoco.mjtRndFlag.mjRND_WIREFRAME] = self._wire_frame
         # Geom group visibility
         elif key in (glfw.KEY_0, glfw.KEY_1, glfw.KEY_2, glfw.KEY_3, glfw.KEY_4):
             self.vopt.geomgroup[key - glfw.KEY_0] ^= 1
@@ -371,8 +389,24 @@ class MujocoViewer:
             "On" if self._contacts else "Off")
         add_overlay(
             topleft,
+            "[J]oints",
+            "On" if self._joints else "Off")
+        add_overlay(
+            topleft,
+            "[I]nertia",
+            "On" if self._inertias else "Off")
+        add_overlay(
+            topleft,
+            "Center of [M]ass",
+            "On" if self._com else "Off")
+        add_overlay(
+            topleft,
             "T[r]ansparent",
             "On" if self._transparent else "Off")
+        add_overlay(
+            topleft,
+            "[W]ireframe",
+            "On" if self._wire_frame else "Off")
         if self._paused is not None:
             if not self._paused:
                 add_overlay(topleft, "Stop", "[Space]")
