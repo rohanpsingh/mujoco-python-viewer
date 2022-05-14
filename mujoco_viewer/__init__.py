@@ -1,1 +1,2 @@
 from mujoco_viewer.mujoco_viewer import MujocoViewer
+from mujoco_viewer.callbacks import CallBacks
