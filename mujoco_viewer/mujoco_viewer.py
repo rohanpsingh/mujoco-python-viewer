@@ -413,7 +413,7 @@ class MujocoViewer:
             "Center of [M]ass",
             "On" if self._com else "Off")
         add_overlay(
-            topleft, "Shad[O]ws", "On" if self.callbacks._shadows else "Off"
+            topleft, "Shad[O]ws", "On" if self._shadows else "Off"
         )
         add_overlay(
             topleft,
@@ -426,7 +426,7 @@ class MujocoViewer:
         add_overlay(
             topleft,
             "Con[V]ex Hull Rendering",
-            "On" if self.callbacks._convex_hull_rendering else "Off",
+            "On" if self._convex_hull_rendering else "Off",
         )
         if self._paused is not None:
             if not self._paused:
