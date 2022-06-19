@@ -23,7 +23,9 @@ class MujocoViewer:
         self._transparent = False
         self._contacts = False
         self._joints = False
+        self._shadows = True
         self._wire_frame = False
+        self._convex_hull_rendering = False
         self._inertias = False
         self._com = False
         self._render_every_frame = True
@@ -137,6 +139,16 @@ class MujocoViewer:
         elif key == glfw.KEY_M:
             self._com = not self._com
             self.vopt.flags[mujoco.mjtVisFlag.mjVIS_COM] = self._com
+        # Shadow Rendering
+        elif key == glfw.KEY_O:
+            self._shadows = not self._shadows
+            self.scn.flags[mujoco.mjtRndFlag.mjRND_SHADOW] = self._shadows
+        # Convex-Hull rendering
+        elif key == glfw.KEY_V:
+            self._convex_hull_rendering = not self._convex_hull_rendering
+            self.vopt.flags[
+                mujoco.mjtVisFlag.mjVIS_CONVEXHULL
+            ] = self._convex_hull_rendering
         # Wireframe Rendering
         elif key == glfw.KEY_W:
             self._wire_frame = not self._wire_frame
@@ -401,6 +413,9 @@ class MujocoViewer:
             "Center of [M]ass",
             "On" if self._com else "Off")
         add_overlay(
+            topleft, "Shad[O]ws", "On" if self._shadows else "Off"
+        )
+        add_overlay(
             topleft,
             "T[r]ansparent",
             "On" if self._transparent else "Off")
@@ -408,6 +423,11 @@ class MujocoViewer:
             topleft,
             "[W]ireframe",
             "On" if self._wire_frame else "Off")
+        add_overlay(
+            topleft,
+            "Con[V]ex Hull Rendering",
+            "On" if self._convex_hull_rendering else "Off",
+        )
         if self._paused is not None:
             if not self._paused:
                 add_overlay(topleft, "Stop", "[Space]")
