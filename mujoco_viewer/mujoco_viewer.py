@@ -145,10 +145,10 @@ class MujocoViewer:
             self.scn.flags[mujoco.mjtRndFlag.mjRND_SHADOW] = self._shadows
         # Convex-Hull rendering
         elif key == glfw.KEY_V:
+            self._convex_hull_rendering = not self._convex_hull_rendering
             self.vopt.flags[
                 mujoco.mjtVisFlag.mjVIS_CONVEXHULL
             ] = self._convex_hull_rendering
-            self._convex_hull_rendering = not self._convex_hull_rendering
         # Wireframe Rendering
         elif key == glfw.KEY_W:
             self._wire_frame = not self._wire_frame
