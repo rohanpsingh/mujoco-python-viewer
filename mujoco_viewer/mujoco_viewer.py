@@ -23,7 +23,7 @@ class MujocoViewer:
         self._transparent = False
         self._contacts = False
         self._joints = False
-        self._shadows = False
+        self._shadows = True
         self._wire_frame = False
         self._convex_hull_rendering = False
         self._inertias = False
