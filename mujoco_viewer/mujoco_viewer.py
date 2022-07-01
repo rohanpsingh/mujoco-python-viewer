@@ -536,3 +536,4 @@ class MujocoViewer:
 
     def close(self):
         glfw.terminate()
+        self.ctx.free()
