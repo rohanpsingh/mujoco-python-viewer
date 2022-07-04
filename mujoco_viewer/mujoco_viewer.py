@@ -41,7 +41,7 @@ class MujocoViewer:
         glfw.init()
         width, height = glfw.get_video_mode(glfw.get_primary_monitor()).size
         self.window = glfw.create_window(
-            width // 2, height // 2, "mujoco", None, None)
+            width, height, "mujoco-python-viewer", None, None)
         glfw.make_context_current(self.window)
         glfw.swap_interval(1)
 
