@@ -35,7 +35,7 @@ class MujocoViewer:
         self._run_speed = 1.0
         self._loop_count = 0
         self._advance_by_one_step = False
-        self._hide_menu = False
+        self._hide_menu = True
 
         # glfw init
         glfw.init()
@@ -77,6 +77,8 @@ class MujocoViewer:
 
     def _key_callback(self, window, key, scancode, action, mods):
         if action != glfw.RELEASE:
+            if key == glfw.KEY_LEFT_ALT:
+                self._hide_menu = False
             return
         # Switch cameras
         elif key == glfw.KEY_TAB:
@@ -122,8 +124,8 @@ class MujocoViewer:
         elif key == glfw.KEY_E:
             self.vopt.frame = 1 - self.vopt.frame
         # Hide overlay menu
-        elif key == glfw.KEY_H:
-            self._hide_menu = not self._hide_menu
+        elif key == glfw.KEY_LEFT_ALT:
+            self._hide_menu = True
         # Make transparent
         elif key == glfw.KEY_R:
             self._transparent = not self._transparent
@@ -496,15 +498,16 @@ class MujocoViewer:
                 # render
                 mujoco.mjr_render(self.viewport, self.scn, self.ctx)
                 # overlay items
-                if not self._hide_menu:
-                    for gridpos, [t1, t2] in self._overlay.items():
-                        mujoco.mjr_overlay(
-                            mujoco.mjtFontScale.mjFONTSCALE_150,
-                            gridpos,
-                            self.viewport,
-                            t1,
-                            t2,
-                            self.ctx)
+                for gridpos, [t1, t2] in self._overlay.items():
+                    if gridpos == mujoco.mjtGridPos.mjGRID_TOPLEFT and self._hide_menu:
+                        continue
+                    mujoco.mjr_overlay(
+                        mujoco.mjtFontScale.mjFONTSCALE_150,
+                        gridpos,
+                        self.viewport,
+                        t1,
+                        t2,
+                        self.ctx)
                 glfw.swap_buffers(self.window)
             glfw.poll_events()
             self._time_per_render = 0.9 * self._time_per_render + \
