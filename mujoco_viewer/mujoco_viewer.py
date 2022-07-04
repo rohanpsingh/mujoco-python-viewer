@@ -126,6 +126,8 @@ class MujocoViewer:
         # Hide overlay menu
         elif key == glfw.KEY_LEFT_ALT:
             self._hide_menu = True
+        elif key == glfw.KEY_H:
+            self._hide_menu = not self._hide_menu
         # Make transparent
         elif key == glfw.KEY_R:
             self._transparent = not self._transparent
