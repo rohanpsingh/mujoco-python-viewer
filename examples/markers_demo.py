@@ -36,10 +36,26 @@ for _ in range(10000):
     x_dir = [[0, 0, 1], [0, 1, 0], [-1, 0, 0]]
     y_dir = [[1, 0, 0], [0, 0, 1], [0, -1, 0]]
     z_dir = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    viewer.add_marker(pos=[0, 0, 0], size=[0.05, 0.05, 0.05], rgba=[1, 1, 1, 1], type=mujoco.mjtGeom.mjGEOM_SPHERE, label="origin")
-    viewer.add_marker(pos=[0, 0, 0], mat=x_dir, size=[0.01, 0.01, 2], rgba=[1, 0, 0, 0.2], type=mujoco.mjtGeom.mjGEOM_ARROW, label="")
-    viewer.add_marker(pos=[0, 0, 0], mat=y_dir, size=[0.01, 0.01, 2], rgba=[0, 1, 0, 0.2], type=mujoco.mjtGeom.mjGEOM_ARROW, label="")
-    viewer.add_marker(pos=[0, 0, 0], mat=z_dir, size=[0.01, 0.01, 2], rgba=[0, 0, 1, 0.2], type=mujoco.mjtGeom.mjGEOM_ARROW, label="")
+    viewer.add_marker(
+        pos=[
+            0, 0, 0], size=[
+            0.05, 0.05, 0.05], rgba=[
+                1, 1, 1, 1], type=mujoco.mjtGeom.mjGEOM_SPHERE, label="origin")
+    viewer.add_marker(
+        pos=[
+            0, 0, 0], mat=x_dir, size=[
+            0.01, 0.01, 2], rgba=[
+                1, 0, 0, 0.2], type=mujoco.mjtGeom.mjGEOM_ARROW, label="")
+    viewer.add_marker(
+        pos=[
+            0, 0, 0], mat=y_dir, size=[
+            0.01, 0.01, 2], rgba=[
+                0, 1, 0, 0.2], type=mujoco.mjtGeom.mjGEOM_ARROW, label="")
+    viewer.add_marker(
+        pos=[
+            0, 0, 0], mat=z_dir, size=[
+            0.01, 0.01, 2], rgba=[
+                0, 0, 1, 0.2], type=mujoco.mjtGeom.mjGEOM_ARROW, label="")
 
     # render
     viewer.render()
