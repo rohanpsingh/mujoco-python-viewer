@@ -8,7 +8,7 @@ import imageio
 
 
 class MujocoViewer:
-    def __init__(self, model, data):
+    def __init__(self, model, data, title="mujoco-python-viewer", width=None, height=None):
         self.model = model
         self.data = data
 
@@ -39,9 +39,15 @@ class MujocoViewer:
 
         # glfw init
         glfw.init()
-        width, height = glfw.get_video_mode(glfw.get_primary_monitor()).size
+
+        if not width:
+            width, _ = glfw.get_video_mode(glfw.get_primary_monitor()).size
+
+        if not height:
+            _, height = glfw.get_video_mode(glfw.get_primary_monitor()).size
+
         self.window = glfw.create_window(
-            width, height, "mujoco-python-viewer", None, None)
+            width, height, title, None, None)
         glfw.make_context_current(self.window)
         glfw.swap_interval(1)
 
