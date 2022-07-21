@@ -8,7 +8,13 @@ import imageio
 
 
 class MujocoViewer:
-    def __init__(self, model, data, title="mujoco-python-viewer", width=None, height=None):
+    def __init__(
+            self,
+            model,
+            data,
+            title="mujoco-python-viewer",
+            width=None,
+            height=None):
         self.model = model
         self.data = data
 
