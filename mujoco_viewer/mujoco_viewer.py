@@ -88,6 +88,12 @@ class MujocoViewer:
         self._overlay = {}
         self._markers = []
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
     def _key_callback(self, window, key, scancode, action, mods):
         if action != glfw.RELEASE:
             if key == glfw.KEY_LEFT_ALT:
