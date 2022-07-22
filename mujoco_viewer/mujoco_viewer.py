@@ -15,7 +15,7 @@ class MujocoViewer:
             title="mujoco-python-viewer",
             width=None,
             height=None,
-            hide_statistics_menu=False):
+            hide_menus=True):
         self.model = model
         self.data = data
 
@@ -42,8 +42,7 @@ class MujocoViewer:
         self._run_speed = 1.0
         self._loop_count = 0
         self._advance_by_one_step = False
-        self._hide_help_menu = True
-        self._hide_statistics_menu = hide_statistics_menu
+        self._hide_menus = hide_menus
 
         # glfw init
         glfw.init()
@@ -92,7 +91,7 @@ class MujocoViewer:
     def _key_callback(self, window, key, scancode, action, mods):
         if action != glfw.RELEASE:
             if key == glfw.KEY_LEFT_ALT:
-                self._hide_help_menu = False
+                self._hide_menus = False
             return
         # Switch cameras
         elif key == glfw.KEY_TAB:
@@ -139,11 +138,9 @@ class MujocoViewer:
             self.vopt.frame = 1 - self.vopt.frame
         # Hide overlay menu
         elif key == glfw.KEY_LEFT_ALT:
-            self._hide_help_menu = True
+            self._hide_menus = True
         elif key == glfw.KEY_H:
-            self._hide_help_menu = not self._hide_help_menu
-        elif key == glfw.KEY_A:
-            self._hide_statistics_menu = not self._hide_statistics_menu
+            self._hide_menus = not self._hide_menus
         # Make transparent
         elif key == glfw.KEY_R:
             self._transparent = not self._transparent
@@ -461,8 +458,7 @@ class MujocoViewer:
             topleft,
             "Referenc[e] frames",
             "On" if self.vopt.frame == 1 else "Off")
-        add_overlay(topleft, "[H]ide Help Menu (this menu)", "")
-        add_overlay(topleft, "Hide St[A]tistics Menu (bottom-left menu)", "")
+        add_overlay(topleft, "[H]ide Menus", "")
         if self._image_idx > 0:
             fname = self._image_path % (self._image_idx - 1)
             add_overlay(topleft, "Cap[t]ure frame", "Saved as %s" % fname)
@@ -518,10 +514,9 @@ class MujocoViewer:
                 mujoco.mjr_render(self.viewport, self.scn, self.ctx)
                 # overlay items
                 for gridpos, [t1, t2] in self._overlay.items():
-                    if gridpos == mujoco.mjtGridPos.mjGRID_TOPLEFT and self._hide_help_menu:
-                        continue
-
-                    if gridpos == mujoco.mjtGridPos.mjGRID_BOTTOMLEFT and self._hide_statistics_menu:
+                    menu_positions = [mujoco.mjtGridPos.mjGRID_TOPLEFT,
+                                      mujoco.mjtGridPos.mjGRID_BOTTOMLEFT]
+                    if gridpos in menu_positions and self._hide_menus:
                         continue
 
                     mujoco.mjr_overlay(
