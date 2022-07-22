@@ -54,3 +54,4 @@ Other key bindings are shown in the overlay menu (almost similar to `mujoco-py`)
 - `title`: set the title of the window, for example: `viewer = mujoco_viewer.MujocoViewer(model, data, title='My Demo')` (defaults to `mujoco-python-viewer`). 
 - `width`: set the window width, for example: `viewer = mujoco_viewer.MujocoViewer(model, data, width=300)` (defaults to full screen's width). 
 - `height`: set the window height, for example: `viewer = mujoco_viewer.MujocoViewer(model, data, height=300)` (defaults to full screen's height). 
+- `hide_menus`: set whether the overlay menus should be hidden or not (defaults to `True`).
