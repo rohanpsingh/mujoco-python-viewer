@@ -46,6 +46,7 @@ class MujocoViewer:
 
         # glfw init
         glfw.init()
+        self.is_running = True
 
         if not width:
             width, _ = glfw.get_video_mode(glfw.get_primary_monitor()).size
@@ -181,10 +182,7 @@ class MujocoViewer:
             self.vopt.geomgroup[key - glfw.KEY_0] ^= 1
         # Quit
         if key == glfw.KEY_ESCAPE:
-            print("Pressed ESC")
-            print("Quitting.")
-            glfw.terminate()
-            sys.exit(0)
+            self.close()
 
     def _cursor_pos_callback(self, window, xpos, ypos):
         if not (self._button_left_pressed or self._button_right_pressed):
@@ -490,6 +488,9 @@ class MujocoViewer:
         mujoco.mjv_applyPerturbForce(self.model, self.data, self.pert)
 
     def render(self):
+        if not self.is_running:
+            raise NotImplementedError('Window was destroyed but you tried to render. Please use viewer.is_running to check if the window is running or not.')
+
         # mjv_updateScene, mjr_render, mjr_overlay
         def update():
             # fill overlay items
@@ -499,8 +500,8 @@ class MujocoViewer:
             if self.window is None:
                 return
             elif glfw.window_should_close(self.window):
-                glfw.terminate()
-                sys.exit(0)
+                self.close()
+                return
             self.viewport.width, self.viewport.height = glfw.get_framebuffer_size(
                 self.window)
             with self._gui_lock:
@@ -562,5 +563,6 @@ class MujocoViewer:
         self.apply_perturbations()
 
     def close(self):
+        self.is_running = False
         glfw.terminate()
         self.ctx.free()
