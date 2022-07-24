@@ -43,7 +43,7 @@ Double-click on a geom and hold `Ctrl` to apply forces (right) and torques (left
 
 
 Press `ESC` to quit.  
-Other key bindings are shown in the overlay menu (almost similar to `mujoco-py`).
+Other key bindings are shown in the overlay menu (Press `H` or hold `Alt`).
 
 # Optional Parameters
 

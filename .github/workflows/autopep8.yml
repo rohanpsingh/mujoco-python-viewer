@@ -18,3 +18,4 @@ jobs:
           labels: autopep8, automated pr
           reviewers: rohanpsingh
           branch: autopep8-patches
+          base: ${{ github.head_ref }}
