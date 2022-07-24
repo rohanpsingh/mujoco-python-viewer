@@ -11,7 +11,7 @@ viewer = mujoco_viewer.MujocoViewer(model, data)
 for _ in range(100000):
     mujoco.mj_step(model, data)
     viewer.render()
-    if not viewer.is_running:
+    if not viewer.is_alive:
         break
 
 # close
