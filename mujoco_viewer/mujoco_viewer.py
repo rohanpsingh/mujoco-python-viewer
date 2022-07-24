@@ -1,6 +1,5 @@
 import mujoco
 import glfw
-import sys
 from threading import Lock
 import numpy as np
 import time
@@ -18,6 +17,8 @@ class MujocoViewer:
             hide_menus=True):
         self.model = model
         self.data = data
+
+        self.is_alive = True
 
         self._gui_lock = Lock()
         self._button_left_pressed = False
@@ -177,8 +178,8 @@ class MujocoViewer:
         if key == glfw.KEY_ESCAPE:
             print("Pressed ESC")
             print("Quitting.")
-            glfw.terminate()
-            sys.exit(0)
+            glfw.set_window_should_close(self.window, True)
+        return
 
     def _cursor_pos_callback(self, window, xpos, ypos):
         if not (self._button_left_pressed or self._button_right_pressed):
@@ -484,17 +485,19 @@ class MujocoViewer:
         mujoco.mjv_applyPerturbForce(self.model, self.data, self.pert)
 
     def render(self):
+        if not self.is_alive:
+            raise Exception(
+                "GLFW window does not exist but you tried to render.")
+        if glfw.window_should_close(self.window):
+            self.close()
+            return
+
         # mjv_updateScene, mjr_render, mjr_overlay
         def update():
             # fill overlay items
             self._create_overlay()
 
             render_start = time.time()
-            if self.window is None:
-                return
-            elif glfw.window_should_close(self.window):
-                glfw.terminate()
-                sys.exit(0)
             self.viewport.width, self.viewport.height = glfw.get_framebuffer_size(
                 self.window)
             with self._gui_lock:
@@ -537,6 +540,9 @@ class MujocoViewer:
         if self._paused:
             while self._paused:
                 update()
+                if glfw.window_should_close(self.window):
+                    self.close()
+                    break
                 if self._advance_by_one_step:
                     self._advance_by_one_step = False
                     break
@@ -556,5 +562,6 @@ class MujocoViewer:
         self.apply_perturbations()
 
     def close(self):
+        self.is_alive = False
         glfw.terminate()
         self.ctx.free()
