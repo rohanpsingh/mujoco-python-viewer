@@ -4,9 +4,11 @@ from threading import Lock
 import numpy as np
 import time
 import imageio
-
+import copy
 
 class MujocoViewer:
+    _inited = False
+    
     def __init__(
             self,
             model,
@@ -15,6 +17,10 @@ class MujocoViewer:
             title="mujoco-python-viewer",
             width=None,
             height=None,
+            sensor_cameras={
+                "camera/zed/L": {"width": 1280, "height":720, "fps": 60, "id":1},
+                # "camera/zed/R": {"width": 1280, "height":720, "fps": 60},
+            },
             hide_menus=True):
         self.model = model
         self.data = data
@@ -24,8 +30,9 @@ class MujocoViewer:
                 "Invalid mode. Only 'offscreen' and 'window' are supported.")
 
         self.is_alive = True
-
+        self._sensor_cameras = sensor_cameras
         self._gui_lock = Lock()
+        self._buffer_lock = Lock()
         self._button_left_pressed = False
         self._button_right_pressed = False
         self._left_double_click_pressed = False
@@ -100,6 +107,22 @@ class MujocoViewer:
         # overlay, markers
         self._overlay = {}
         self._markers = []
+        
+        # create camera sensor buffers:
+        for camera in self._sensor_cameras:
+            w = self._sensor_cameras[camera]["width"]
+            h = self._sensor_cameras[camera]["height"]
+            # Create Buffer:
+            self._sensor_cameras[camera]["viewport"] = mujoco.MjrRect(0, 0, w, h)
+            self._sensor_cameras[camera]["frame_buffer"] = np.zeros((h, w, 3), dtype=np.uint8)
+            self._sensor_cameras[camera]["frame_stamp"] = glfw.get_time()
+            self._sensor_cameras[camera]["cam"] = mujoco.MjvCamera()
+            
+            self._sensor_cameras[camera]["cam"].type = mujoco.mjtCamera.mjCAMERA_FIXED
+            self._sensor_cameras[camera]["cam"].fixedcamid = self._sensor_cameras[camera]["id"]
+        
+        self._inited = True
+            
 
     def _key_callback(self, window, key, scancode, action, mods):
         if action != glfw.RELEASE:
@@ -497,7 +520,7 @@ class MujocoViewer:
         mujoco.mjv_applyPerturbForce(self.model, self.data, self.pert)
 
     def read_pixels(self, camid=None):
-        if self.render_mode is 'window':
+        if self.render_mode == 'window':
             raise NotImplementedError(
                 "Use 'render()' in 'window' mode.")
 
@@ -530,7 +553,7 @@ class MujocoViewer:
         return np.flipud(img)
 
     def render(self):
-        if self.render_mode is 'offscreen':
+        if self.render_mode == 'offscreen':
             raise NotImplementedError(
                 "Use 'read_pixels()' for 'offscreen' mode.")
         if not self.is_alive:
@@ -539,6 +562,28 @@ class MujocoViewer:
         if glfw.window_should_close(self.window):
             self.close()
             return
+
+        def update_sensor_cameras():
+            for camera in self._sensor_cameras:
+                with self._gui_lock:
+                    # update scene
+                    mujoco.mjv_updateScene(
+                        self.model,
+                        self.data,
+                        self.vopt,
+                        self.pert,
+                        self._sensor_cameras[camera]["cam"],
+                        mujoco.mjtCatBit.mjCAT_ALL.value,
+                        self.scn)
+                    # render
+                    mujoco.mjr_render(self._sensor_cameras[camera]["viewport"], self.scn, self.ctx)
+            for camera in self._sensor_cameras:
+                with self._buffer_lock:
+                    with self._gui_lock:
+                        mujoco.mjr_readPixels(
+                            self._sensor_cameras[camera]["frame_buffer"], None,
+                            self._sensor_cameras[camera]["viewport"], self.ctx)
+                        self._sensor_cameras[camera]["frame_stamp"] = glfw.get_time()
 
         # mjv_updateScene, mjr_render, mjr_overlay
         def update():
@@ -587,6 +632,7 @@ class MujocoViewer:
 
         if self._paused:
             while self._paused:
+                update_sensor_cameras()
                 update()
                 if glfw.window_should_close(self.window):
                     self.close()
@@ -600,6 +646,7 @@ class MujocoViewer:
             if self._render_every_frame:
                 self._loop_count = 1
             while self._loop_count > 0:
+                update_sensor_cameras()
                 update()
                 self._loop_count -= 1
 
@@ -609,7 +656,18 @@ class MujocoViewer:
         # apply perturbation (should this come before mj_step?)
         self.apply_perturbations()
 
+    def acquire_sensor_camera_frames(self):
+        camera_buffers = {"frame_buffer":{}, "frame_stamp":{}}
+        with self._buffer_lock:
+            for camera in self._sensor_cameras:
+                camera_buffers["frame_buffer"][camera] = copy.deepcopy(self._sensor_cameras[camera]["frame_buffer"])
+                camera_buffers["frame_stamp"][camera] = copy.deepcopy(self._sensor_cameras[camera]["frame_stamp"])
+        return camera_buffers
+
     def close(self):
         self.is_alive = False
         glfw.terminate()
         self.ctx.free()
+    
+    def is_inited(self):
+        return self._inited
