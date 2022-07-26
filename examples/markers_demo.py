@@ -28,7 +28,7 @@ data = mujoco.MjData(model)
 # create the viewer object
 viewer = mujoco_viewer.MujocoViewer(model, data)
 
-for _ in range(10000):
+while viewer.is_alive:
     # sim step
     mujoco.mj_step(model, data)
 
