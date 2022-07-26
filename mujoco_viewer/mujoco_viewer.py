@@ -20,7 +20,8 @@ class MujocoViewer:
         self.data = data
         self.render_mode = mode
         if self.render_mode not in ['offscreen', 'window']:
-            raise NotImplementedError("Invalid mode. Only 'offscreen' and 'window' are supported.")
+            raise NotImplementedError(
+                "Invalid mode. Only 'offscreen' and 'window' are supported.")
 
         self.is_alive = True
 
@@ -60,7 +61,7 @@ class MujocoViewer:
         if not height:
             _, height = glfw.get_video_mode(glfw.get_primary_monitor()).size
 
-        if self.render_mode=='offscreen':
+        if self.render_mode == 'offscreen':
             glfw.window_hint(glfw.VISIBLE, 0)
 
         self.window = glfw.create_window(
@@ -72,12 +73,13 @@ class MujocoViewer:
             self.window)
 
         # install callbacks only for 'window' mode
-        if self.render_mode=='window':
+        if self.render_mode == 'window':
             window_width, _ = glfw.get_window_size(self.window)
             self._scale = framebuffer_width * 1.0 / window_width
 
             # set callbacks
-            glfw.set_cursor_pos_callback(self.window, self._cursor_pos_callback)
+            glfw.set_cursor_pos_callback(
+                self.window, self._cursor_pos_callback)
             glfw.set_mouse_button_callback(
                 self.window, self._mouse_button_callback)
             glfw.set_scroll_callback(self.window, self._scroll_callback)
@@ -500,7 +502,7 @@ class MujocoViewer:
                 "Use 'render()' in 'window' mode.")
 
         if camid is not None:
-            if camid==-1:
+            if camid == -1:
                 self.cam.type = mujoco.mjtCamera.mjCAMERA_FREE
             else:
                 self.cam.type = mujoco.mjtCamera.mjCAMERA_FIXED
