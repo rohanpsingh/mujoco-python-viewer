@@ -31,10 +31,11 @@ data = mujoco.MjData(model)
 viewer = mujoco_viewer.MujocoViewer(model, data)
 
 # simulate and render
-for _ in range(100000):
-    mujoco.mj_step(model, data)
-    viewer.render()
-    if not viewer.is_alive:
+for _ in range(10000):
+    if viewer.is_alive:
+        mujoco.mj_step(model, data)
+        viewer.render()
+    else:
         break
 
 # close
