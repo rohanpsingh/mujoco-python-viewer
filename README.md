@@ -19,7 +19,7 @@ $ pip install mujoco-python-viewer
 ```
 
 # Usage
-
+#### How to render in a window?
 ```py
 import mujoco
 import mujoco_viewer
@@ -45,12 +45,27 @@ viewer.close()
 The render should pop up and the simulation should be running.  
 Double-click on a geom and hold `Ctrl` to apply forces (right) and torques (left).
 
-
 ![ezgif-2-6758c40cdf](https://user-images.githubusercontent.com/16384313/161459985-a47e74dc-92c9-4a0b-99fc-92d1b5b04163.gif)
 
 
 Press `ESC` to quit.  
 Other key bindings are shown in the overlay menu (Press `H` or hold `Alt`).
+
+
+
+#### How to render offscreen?
+```py
+import mujoco
+import mujoco_viewer
+
+model = mujoco.MjModel.from_xml_path('humanoid.xml')
+data = mujoco.MjData(model)
+
+viewer = mujoco_viewer.MujocoViewer(model, data, 'offscreen')
+mujoco.mj_forward(model, data)
+img = viewer.read_pixels(camid=2)
+## do something cool with img
+```
 
 # Optional Parameters
 
