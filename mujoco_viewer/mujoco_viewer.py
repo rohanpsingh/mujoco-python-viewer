@@ -11,12 +11,16 @@ class MujocoViewer:
             self,
             model,
             data,
+            mode='window',
             title="mujoco-python-viewer",
             width=None,
             height=None,
             hide_menus=True):
         self.model = model
         self.data = data
+        self.render_mode = mode
+        if self.render_mode not in ['offscreen', 'window']:
+            raise NotImplementedError("Invalid mode. Only 'offscreen' and 'window' are supported.")
 
         self.is_alive = True
 
@@ -25,6 +29,8 @@ class MujocoViewer:
         self._button_right_pressed = False
         self._left_double_click_pressed = False
         self._right_double_click_pressed = False
+        self._last_left_click_time = None
+        self._last_right_click_time = None
         self._last_mouse_x = 0
         self._last_mouse_y = 0
         self._paused = False
@@ -54,6 +60,9 @@ class MujocoViewer:
         if not height:
             _, height = glfw.get_video_mode(glfw.get_primary_monitor()).size
 
+        if self.render_mode=='offscreen':
+            glfw.window_hint(glfw.VISIBLE, 0)
+
         self.window = glfw.create_window(
             width, height, title, None, None)
         glfw.make_context_current(self.window)
@@ -61,17 +70,18 @@ class MujocoViewer:
 
         framebuffer_width, framebuffer_height = glfw.get_framebuffer_size(
             self.window)
-        window_width, _ = glfw.get_window_size(self.window)
-        self._scale = framebuffer_width * 1.0 / window_width
 
-        # set callbacks
-        glfw.set_cursor_pos_callback(self.window, self._cursor_pos_callback)
-        glfw.set_mouse_button_callback(
-            self.window, self._mouse_button_callback)
-        glfw.set_scroll_callback(self.window, self._scroll_callback)
-        glfw.set_key_callback(self.window, self._key_callback)
-        self._last_left_click_time = None
-        self._last_right_click_time = None
+        # install callbacks only for 'window' mode
+        if self.render_mode=='window':
+            window_width, _ = glfw.get_window_size(self.window)
+            self._scale = framebuffer_width * 1.0 / window_width
+
+            # set callbacks
+            glfw.set_cursor_pos_callback(self.window, self._cursor_pos_callback)
+            glfw.set_mouse_button_callback(
+                self.window, self._mouse_button_callback)
+            glfw.set_scroll_callback(self.window, self._scroll_callback)
+            glfw.set_key_callback(self.window, self._key_callback)
 
         # create options, camera, scene, context
         self.vopt = mujoco.MjvOption()
@@ -484,7 +494,43 @@ class MujocoViewer:
         mujoco.mjv_applyPerturbPose(self.model, self.data, self.pert, 0)
         mujoco.mjv_applyPerturbForce(self.model, self.data, self.pert)
 
+    def read_pixels(self, camid=None):
+        if self.render_mode is 'window':
+            raise NotImplementedError(
+                "Use 'render()' in 'window' mode.")
+
+        if camid is not None:
+            if camid==-1:
+                self.cam.type = mujoco.mjtCamera.mjCAMERA_FREE
+            else:
+                self.cam.type = mujoco.mjtCamera.mjCAMERA_FIXED
+            self.cam.fixedcamid = camid
+
+        self.viewport.width, self.viewport.height = glfw.get_framebuffer_size(
+            self.window)
+        # update scene
+        mujoco.mjv_updateScene(
+            self.model,
+            self.data,
+            self.vopt,
+            self.pert,
+            self.cam,
+            mujoco.mjtCatBit.mjCAT_ALL.value,
+            self.scn)
+        # render
+        mujoco.mjr_render(self.viewport, self.scn, self.ctx)
+
+        img = np.zeros(
+            (glfw.get_framebuffer_size(
+                self.window)[1], glfw.get_framebuffer_size(
+                self.window)[0], 3), dtype=np.uint8)
+        mujoco.mjr_readPixels(img, None, self.viewport, self.ctx)
+        return np.flipud(img)
+
     def render(self):
+        if self.render_mode is 'offscreen':
+            raise NotImplementedError(
+                "Use 'read_pixels()' for 'offscreen' mode.")
         if not self.is_alive:
             raise Exception(
                 "GLFW window does not exist but you tried to render.")
