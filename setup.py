@@ -2,22 +2,24 @@
 import os
 from setuptools import find_packages, setup
 
-VERSION = '0.1.0'
+VERSION = '0.2.0'
 
 INSTALL_REQUIRES = (
-    ['mujoco >= 2.1.5',
-     'glfw >= 2.5.0',
-     'imageio']
+    [
+        'mujoco >= 2.1.5',
+        'glfw >= 2.5.0',
+        'imageio'
+    ]
 )
 
 setup(
     name='mujoco-python-viewer',
     version=VERSION,
-    author='Rohan P. Singh',
-    author_email='rohan565singh@gmail.com',
-    url='https://github.com/rohanpsingh/mujoco-python-viewer',
+    author='Jack Xu, Rohan P. Singh',
+    author_email='projectbyjx@gmail.com, rohan565singh@gmail.com',
+    url='https://github.com/jaku-jaku/jx-mujoco-python-viewer',
     description='Interactive renderer for MuJoCo Python',
-    long_description='Interactive renderer for MuJoCo Python',
+    long_description='Interactive renderer for MuJoCo Python, inspired by mujoco-python-viewer and mujoco-py',
     install_requires=INSTALL_REQUIRES,
     packages=find_packages(),
     python_requires='>=3.6',

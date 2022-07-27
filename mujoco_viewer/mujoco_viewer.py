@@ -656,13 +656,16 @@ class MujocoViewer:
         # apply perturbation (should this come before mj_step?)
         self.apply_perturbations()
 
-    def acquire_sensor_camera_frames(self):
+    def acquire_sensor_camera_frames(self, write_to=None):
         camera_buffers = {"frame_buffer":{}, "frame_stamp":{}}
         with self._buffer_lock:
             for camera in self._sensor_cameras:
                 camera_buffers["frame_buffer"][camera] = copy.deepcopy(self._sensor_cameras[camera]["frame_buffer"])
                 camera_buffers["frame_stamp"][camera] = copy.deepcopy(self._sensor_cameras[camera]["frame_stamp"])
+                if write_to:
+                    imageio.imwrite("{}/{}.png".format(write_to, self._sensor_cameras[camera]['id']), camera_buffers["frame_buffer"][camera])
         return camera_buffers
+
 
     def close(self):
         self.is_alive = False
