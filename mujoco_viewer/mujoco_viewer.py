@@ -271,9 +271,11 @@ class MujocoViewer:
         glfw.init()
         
         # - Create Window:
-        ww, wh = glfw.get_video_mode(glfw.get_primary_monitor()).size
-        if window_size:
-            ww, wh = window_size
+        if not window_size: # auto-window
+            window_size = glfw.get_video_mode(glfw.get_primary_monitor()).size
+            with self._viewer_config_lock:
+                self._viewer_config.window_size = window_size
+        ww, wh = window_size
         
         glfw_window = glfw.create_window(ww, wh, title, None, None)
         

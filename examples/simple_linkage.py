@@ -59,7 +59,8 @@ viewer = mujoco_viewer.MujocoViewer(model, data)
 # simulate and render
 for _ in range(100000):
     mujoco.mj_step(model, data)
-    viewer.render()
-
+    viewer.process_safe()
+    viewer.render_safe()
+    
 # close
-viewer.close()
+viewer.signal_termination_safe(if_immediate=True)

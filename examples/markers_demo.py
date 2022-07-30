@@ -28,7 +28,7 @@ data = mujoco.MjData(model)
 # create the viewer object
 viewer = mujoco_viewer.MujocoViewer(model, data)
 
-while viewer.is_alive:
+while True:
     # sim step
     mujoco.mj_step(model, data)
 
@@ -36,29 +36,30 @@ while viewer.is_alive:
     x_dir = [[0, 0, 1], [0, 1, 0], [-1, 0, 0]]
     y_dir = [[1, 0, 0], [0, 0, 1], [0, -1, 0]]
     z_dir = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    viewer.add_marker(
+    viewer.add_marker_safe(
         pos=[
             0, 0, 0], size=[
             0.05, 0.05, 0.05], rgba=[
                 1, 1, 1, 1], type=mujoco.mjtGeom.mjGEOM_SPHERE, label="origin")
-    viewer.add_marker(
+    viewer.add_marker_safe(
         pos=[
             0, 0, 0], mat=x_dir, size=[
             0.01, 0.01, 2], rgba=[
                 1, 0, 0, 0.2], type=mujoco.mjtGeom.mjGEOM_ARROW, label="")
-    viewer.add_marker(
+    viewer.add_marker_safe(
         pos=[
             0, 0, 0], mat=y_dir, size=[
             0.01, 0.01, 2], rgba=[
                 0, 1, 0, 0.2], type=mujoco.mjtGeom.mjGEOM_ARROW, label="")
-    viewer.add_marker(
+    viewer.add_marker_safe(
         pos=[
             0, 0, 0], mat=z_dir, size=[
             0.01, 0.01, 2], rgba=[
                 0, 0, 1, 0.2], type=mujoco.mjtGeom.mjGEOM_ARROW, label="")
 
     # render
-    viewer.render()
-
+    viewer.process_safe()
+    viewer.render_safe()
+    
 # close
-viewer.close()
+viewer.signal_termination_safe(if_immediate=True)
