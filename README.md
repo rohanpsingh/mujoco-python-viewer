@@ -2,6 +2,9 @@
 
 Interactive renderer to use with the official Python bindings for MuJoCo 2.2.x
 
++ Develop along with [jx-mujoco-python-engine](https://github.com/jaku-jaku/jx-mujoco-python-engine)
++ A more efficient, robust and thread safe viewer with native MuJoCo 2.2.x with glfw
++ Works with Mac M1 with MuJoCo 2.2.x
 ## Points to ponder:
 > This repo is/will-be a re-implementation of https://github.com/rohanpsingh/mujoco-python-viewer with custom features
 > Additional credits: I do see a lot of similar structure as used in `mjviewer` from mujoco-py, so I will also give credits to https://github.com/openai/mujoco-py/blob/master/mujoco_py/mjviewer.py
