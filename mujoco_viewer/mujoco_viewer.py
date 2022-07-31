@@ -497,7 +497,7 @@ class MujocoViewer:
         mujoco.mjv_applyPerturbForce(self.model, self.data, self.pert)
 
     def read_pixels(self, camid=None):
-        if self.render_mode is 'window':
+        if self.render_mode == 'window':
             raise NotImplementedError(
                 "Use 'render()' in 'window' mode.")
 
@@ -530,7 +530,7 @@ class MujocoViewer:
         return np.flipud(img)
 
     def render(self):
-        if self.render_mode is 'offscreen':
+        if self.render_mode == 'offscreen':
             raise NotImplementedError(
                 "Use 'read_pixels()' for 'offscreen' mode.")
         if not self.is_alive:
