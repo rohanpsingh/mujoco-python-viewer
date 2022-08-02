@@ -1,6 +1,9 @@
 BSD 2-Clause License
 
-Copyright (c) 2022, Jack Xu
+mujoco_py
+├── Copyright (c) 2022, Rohan P. Singh
+│   └── Copyright (c) 2022, Jack Xu
+
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

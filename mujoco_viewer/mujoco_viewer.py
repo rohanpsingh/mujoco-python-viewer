@@ -121,15 +121,19 @@ class MujocoViewer:
         # FPS: float                                      = 60.0 [NOT IMPLEMENTED]
         simulation_run_speed: float                     = 1.0    # [UNUSED]
         sensor_config                                   = dict()
-        fixedcamid: int                                 = -1
+        cam_id: int                                     = -1
+        cam_type                                        = mujoco.mjtCamera.mjCAMERA_FREE
         N_CAM: int                                      = 0
         _viewer_status: _VIEWER_STATUS_MAP              = _VIEWER_STATUS_MAP.DEFAULT
         
         def index_camera_unsafe(self):
-            self.fixedcamid += 1
-            if self.fixedcamid >= self.N_CAM:
-                self.fixedcamid = -1
-        
+            self.cam_id += 1
+            if self.cam_id >= self.N_CAM:
+                self.cam_id = -1
+                self.cam_type = mujoco.mjtCamera.mjCAMERA_FREE
+            else:
+                self.cam_type = mujoco.mjtCamera.mjCAMERA_FIXED
+                
         def scale_simulation_run_speed_unsafe(self, factor):
             self.simulation_run_speed *= factor
             
@@ -277,7 +281,7 @@ class MujocoViewer:
                 self._viewer_config.window_size = window_size
         ww, wh = window_size
         
-        glfw_window = glfw.create_window(ww, wh, title, None, None)
+        glfw_window = glfw.create_window(ww, wh, "[{}] Main Window".format(title), None, None)
         
         glfw.window_hint(glfw.VISIBLE, if_on_scrn)
         glfw.make_context_current(glfw_window)
@@ -437,18 +441,16 @@ class MujocoViewer:
         # - Fetch Inputs:
         with self._viewer_config_lock:
             current_viewer_status = self._viewer_config._viewer_status
-            current_fixed_id = self._viewer_config.fixedcamid
+            current_cam_id = self._viewer_config.cam_id
+            current_cam_type = self._viewer_config.cam_type
         with self._gui_lock:
             frame_buffer_size = self._gui_data.frame_buffer_size
         
         # - Update MJ:
         with self._mj_lock:
             ### change cam id view:
-            self._mj.camera_data.mj_cam.fixedcamid = current_fixed_id
-            if self._mj.camera_data.mj_cam.fixedcamid == -1:
-                self._mj.camera_data.mj_cam.type = mujoco.mjtCamera.mjCAMERA_FREE
-            else:
-                self._mj.camera_data.mj_cam.type = mujoco.mjtCamera.mjCAMERA_FIXED
+            self._mj.camera_data.mj_cam.fixedcamid = current_cam_id
+            self._mj.camera_data.mj_cam.type = current_cam_type
             ### coord frame toggle:
             if bool(current_viewer_status & _VIEWER_STATUS_MAP.TOGGLE_COORD_FRAME):
                 self._mj.vopt.frame = 1 - self._mj.vopt.frame
@@ -523,7 +525,7 @@ class MujocoViewer:
             # find geom and 3D click point, get corresponding body
             aspect_ratio = vp_w / vp_h
             rel_x = int(scale * (current_mouse_data.last_mouse_click_x)) / vp_w
-            rel_y = (vp_h - current_mouse_data.last_mouse_click_y) / vp_h
+            rel_y = (vp_h - int(scale * (current_mouse_data.last_mouse_click_y))) / vp_h
             selected_pnt = np.zeros((3, 1), dtype=np.float64)
             selected_geom = np.zeros((1, 1), dtype=np.int32)
             selected_skin = np.zeros((1, 1), dtype=np.int32)
@@ -548,10 +550,10 @@ class MujocoViewer:
                     if selected_body >= 0:
                         self._mj.camera_data.mj_cam.lookat = selected_pnt.flatten()
                     # switch to tracking camera if dynamic body clicked
-                    if if_mod_control and selected_body > 0:
-                        self._mj.camera_data.mj_cam.type = mujoco.mjtCamera.mjCAMERA_TRACKING
-                        self._mj.camera_data.mj_cam.trackbodyid = selected_body
-                        self._mj.camera_data.mj_cam.fixedcamid = -1
+                    # if if_mod_control and selected_body > 0:
+                    #     self._viewer_config.cam_id = -1
+                    #     self._viewer_config.cam_type = mujoco.mjtCamera.mjCAMERA_TRACKING
+                    #     self._mj.camera_data.mj_cam.trackbodyid = selected_body
                 # set body selection
                 else:
                     if selected_body >= 0:
@@ -764,7 +766,7 @@ class MujocoViewer:
         """
         self._process_viewer_config()
         self._process_mouse_interactions()
-        self._create_overlay()    
+        self._create_overlay()
         return
     
     def render_safe(self):
