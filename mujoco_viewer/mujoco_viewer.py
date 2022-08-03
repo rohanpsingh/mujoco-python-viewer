@@ -251,18 +251,19 @@ class MujocoViewer:
             self._gui_data.viewer_markers = []
             
         # create camera sensor buffers:
-        for camera in self._viewer_config.sensor_config:
-            with self._viewer_config_lock:
-                w = self._viewer_config.sensor_config[camera]["width"]
-                h = self._viewer_config.sensor_config[camera]["height"]
+        for camera_node, camera in self._viewer_config.sensor_config.items():
+            w = camera["width"]
+            h = camera["height"]
+            cam_id = camera["id"]
             # Create Buffer:
             with self._camera_data_lock:
-                self._camera_data[camera].mj_viewport   = mujoco.MjrRect(0, 0, w, h)
-                self._camera_data[camera].frame_buffer  = np.zeros((h, w, 3), dtype=np.uint8)
-                self._camera_data[camera].frame_stamp   = self._gui_data.frame_stamp
-                self._camera_data[camera].mj_cam        = mujoco.MjvCamera()
-                self._camera_data[camera].mj_cam.type          = mujoco.mjtCamera.mjCAMERA_FIXED
-                self._camera_data[camera].mj_cam.fixedcamid    = self._sensor_cameras[camera]["id"]
+                self._camera_data[camera_node] = _CAMERA_DATA()
+                self._camera_data[camera_node].mj_viewport   = mujoco.MjrRect(0, 0, w, h)
+                self._camera_data[camera_node].frame_buffer  = np.zeros((h, w, 3), dtype=np.uint8)
+                self._camera_data[camera_node].frame_stamp   = self._gui_data.frame_stamp
+                self._camera_data[camera_node].mj_cam        = mujoco.MjvCamera()
+                self._camera_data[camera_node].mj_cam.type          = mujoco.mjtCamera.mjCAMERA_FIXED
+                self._camera_data[camera_node].mj_cam.fixedcamid    = cam_id
         
     def _init_glfw_safe(self):
         # - fetch config:
@@ -764,10 +765,40 @@ class MujocoViewer:
     def process_safe(self):
         """ Process: safely process configs from the physical / software modifications
         """
+        # - Process user interactions:
         self._process_viewer_config()
         self._process_mouse_interactions()
-        self._create_overlay()
         return
+    
+    def update_safe(self):
+        # - generate overlays:
+        self._create_overlay()
+        
+        # - Update contexts:
+        ## Main Camera contents:
+        with self._viewer_config_lock:
+            is_on_scrn = self._viewer_config.get_viewer_status_unsafe(_VIEWER_STATUS_MAP.RENDER_ON_SCREEN)
+            
+        with self._mj_lock:
+            mj_timestep = self._mj.model.opt.timestep
+            mj_data_time = self._mj.data.time
+        
+        mujoco.mjv_updateScene(
+            self._mj.model,
+            self._mj.data,
+            self._mj.vopt,
+            self._mj.pert,
+            self._mj.camera_data.mj_cam,
+            mujoco.mjtCatBit.mjCAT_ALL.value,
+            self._mj.scn
+        )
+        
+        if is_on_scrn:
+            # marker items
+            with self._gui_lock:
+                for marker in self._gui_data.viewer_markers:
+                    self._add_marker_to_scene(marker, self._mj.scn)
+        
     
     def render_safe(self):
         """ Rendering: assume it has been udpated with `update_safe`
@@ -810,21 +841,6 @@ class MujocoViewer:
             mj_timestep = self._mj.model.opt.timestep
             mj_data_time = self._mj.data.time
             
-            mujoco.mjv_updateScene(
-                self._mj.model,
-                self._mj.data,
-                self._mj.vopt,
-                self._mj.pert,
-                self._mj.camera_data.mj_cam,
-                mujoco.mjtCatBit.mjCAT_ALL.value,
-                self._mj.scn
-            )
-            if is_on_scrn:
-                # marker items
-                with self._gui_lock:
-                    for marker in self._gui_data.viewer_markers:
-                        self._add_marker_to_scene(marker, self._mj.scn)
-            
             # render
             mujoco.mjr_render(self._mj.camera_data.mj_viewport, self._mj.scn, self._mj.ctx)
             
@@ -847,6 +863,7 @@ class MujocoViewer:
                             gridpos, self._mj.camera_data.mj_viewport,
                             t1, t2, self._mj.ctx
                         )
+                # render on screen:
                 with self._gui_lock:
                     glfw.swap_buffers(self._gui_data.glfw_window)
                 glfw.poll_events()
@@ -878,11 +895,12 @@ class MujocoViewer:
     
         return
     
-    def render_sensor_cameras_safe(self):
+    def render_sensor_cameras_safe(self, if_on_scrn_as_overlay=False):
         for camera_name, camera in self._camera_data.items():
             # update scene
             with self._mj_lock:
                 # change cam to the camera sensors 
+                # TODO: custom vopt and scn for camera sensors
                 mujoco.mjv_updateScene(
                     self._mj.model,
                     self._mj.data,
@@ -896,6 +914,7 @@ class MujocoViewer:
             with self._camera_data_lock:
                 mujoco.mjr_render(camera.mj_viewport, self._mj.scn, self._mj.ctx)
 
+        # cache:
         for camera_name, camera in self._camera_data.items():
             with self._camera_data_lock:
                 with self._mj_lock:
@@ -905,7 +924,7 @@ class MujocoViewer:
     def acquire_sensor_camera_frames_safe(self, write_to=None):
         camera_buffers = {"frame_buffer":{}, "frame_stamp":{}}
         with self._camera_data_lock:
-            for camera_name, camera in self._camera_data_lock.items():
+            for camera_name, camera in self._camera_data.items():
                 camera_buffers["frame_buffer"][camera_name] = copy.deepcopy(camera.frame_buffer)
                 camera_buffers["frame_stamp"][camera_name] = copy.deepcopy(camera.frame_stamp)
                 if write_to:

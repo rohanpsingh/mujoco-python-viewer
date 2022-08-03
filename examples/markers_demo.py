@@ -59,6 +59,7 @@ while True:
 
     # render
     viewer.process_safe()
+    viewer.update_safe()
     viewer.render_safe()
     
 # close

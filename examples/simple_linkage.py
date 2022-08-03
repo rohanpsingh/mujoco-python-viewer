@@ -60,6 +60,7 @@ viewer = mujoco_viewer.MujocoViewer(model, data)
 for _ in range(100000):
     mujoco.mj_step(model, data)
     viewer.process_safe()
+    viewer.update_safe()
     viewer.render_safe()
     
 # close
