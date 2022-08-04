@@ -79,9 +79,11 @@ class Callbacks:
         elif key == glfw.KEY_J:
             self._joints = not self._joints
             self.vopt.flags[mujoco.mjtVisFlag.mjVIS_JOINT] = self._joints
-        # Display coordinate frames
+        # Display mjtFrame
         elif key == glfw.KEY_E:
-            self.vopt.frame = 1 - self.vopt.frame
+            self.vopt.frame+=1
+            if self.vopt.frame==mujoco.mjtFrame.mjNFRAME.value:
+                self.vopt.frame = 0
         # Hide overlay menu
         elif key == glfw.KEY_LEFT_ALT:
             self._hide_menus = True
