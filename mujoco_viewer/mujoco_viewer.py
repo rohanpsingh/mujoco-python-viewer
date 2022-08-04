@@ -89,9 +89,15 @@ class _VIEWER_STATUS_MAP(IntFlag):
 @dataclass
 class _CAMERA_DATA:
     frame_buffer = None
+    depth_buffer = None
     mj_cam       = None
     mj_viewport  = None
     frame_stamp  = None
+class _MJ_CONFIG:
+    vopt         = None
+    pert         = None
+    scn          = None
+    ctx          = None
 
 class MujocoViewer:
     #=========================#
@@ -160,12 +166,9 @@ class MujocoViewer:
         model        = None
         data         = None
         # mujoco placeholder:
-        cam          = None
-        vopt         = None
-        scn          = None
-        pert         = None
-        ctx          = None
-        camera_data: _CAMERA_DATA  = None
+        config:_MJ_CONFIG           = _MJ_CONFIG()
+        camera_data: _CAMERA_DATA   = _CAMERA_DATA()
+
     @dataclass
     class _GUI_DATA:
         # glfw placeholder:
@@ -196,6 +199,8 @@ class MujocoViewer:
     
     _camera_data_lock  = Lock()
     _camera_data: Dict[str, _CAMERA_DATA] = {}
+    
+    _camera_mj_config: _MJ_CONFIG = _MJ_CONFIG() # config for camera rendering
     
     def __init__(self,
         mj_model,
@@ -234,14 +239,14 @@ class MujocoViewer:
         
         # create options, camera, scene, context
         with self._mj_lock:
-            self._mj.vopt    = mujoco.MjvOption()
-            self._mj.scn     = mujoco.MjvScene(self._mj.model, maxgeom=10000)
-            self._mj.pert    = mujoco.MjvPerturb()
-            self._mj.ctx     = mujoco.MjrContext(self._mj.model, mujoco.mjtFontScale.mjFONTSCALE_150.value)
+            self._mj.config.scn     = mujoco.MjvScene(self._mj.model, maxgeom=10000)
+            self._mj.config.ctx     = mujoco.MjrContext(self._mj.model, mujoco.mjtFontScale.mjFONTSCALE_150.value)
+            self._mj.config.vopt    = mujoco.MjvOption()
+            self._mj.config.pert    = mujoco.MjvPerturb()
             # camera buffer:
-            self._mj.camera_data              = _CAMERA_DATA()
             self._mj.camera_data.mj_cam       = mujoco.MjvCamera()
             self._mj.camera_data.mj_viewport  = mujoco.MjrRect(0, 0, ww, wh)
+            self._mj.camera_data.depth_buffer = None # disabled
             self._mj.camera_data.frame_buffer = np.zeros((wh, ww, 3), dtype=np.uint8)
             self._mj.camera_data.frame_stamp  = self._gui_data.frame_stamp
         
@@ -251,6 +256,17 @@ class MujocoViewer:
             self._gui_data.viewer_markers = []
             
         # create camera sensor buffers:
+        with self._camera_data_lock:
+            self._camera_mj_config.vopt    = mujoco.MjvOption()
+            self._camera_mj_config.pert    = mujoco.MjvPerturb()
+            self._camera_mj_config.scn     = mujoco.MjvScene(self._mj.model, maxgeom=10000)
+            self._camera_mj_config.ctx     = mujoco.MjrContext(self._mj.model, mujoco.mjtFontScale.mjFONTSCALE_150.value)
+            # - default config:
+            # --> (disable group0: collision meshes)
+            self._camera_mj_config.vopt.geomgroup[0] = False
+            self._camera_mj_config.vopt.geomgroup[1] = True
+            # --> (disable )
+            
         for camera_node, camera in self._viewer_config.sensor_config.items():
             w = camera["width"]
             h = camera["height"]
@@ -260,6 +276,7 @@ class MujocoViewer:
                 self._camera_data[camera_node] = _CAMERA_DATA()
                 self._camera_data[camera_node].mj_viewport   = mujoco.MjrRect(0, 0, w, h)
                 self._camera_data[camera_node].frame_buffer  = np.zeros((h, w, 3), dtype=np.uint8)
+                self._camera_data[camera_node].depth_buffer  = np.zeros((h, w), dtype=np.float32)
                 self._camera_data[camera_node].frame_stamp   = self._gui_data.frame_stamp
                 self._camera_data[camera_node].mj_cam        = mujoco.MjvCamera()
                 self._camera_data[camera_node].mj_cam.type          = mujoco.mjtCamera.mjCAMERA_FIXED
@@ -432,7 +449,7 @@ class MujocoViewer:
         glfw.set_window_should_close(self._gui_data.glfw_window, True)
         glfw.terminate()
         with self._mj_lock:
-            self._mj.ctx.free()
+            self._mj.config.ctx.free()
         with self._viewer_config_lock:
             self._viewer_config.clear_viewer_status_unsafe(_VIEWER_STATUS_MAP.IS_ALIVE)
         print("mujoco_viewer has been Terminated!")
@@ -454,7 +471,7 @@ class MujocoViewer:
             self._mj.camera_data.mj_cam.type = current_cam_type
             ### coord frame toggle:
             if bool(current_viewer_status & _VIEWER_STATUS_MAP.TOGGLE_COORD_FRAME):
-                self._mj.vopt.frame = 1 - self._mj.vopt.frame
+                self._mj.config.vopt.frame = 1 - self._mj.config.vopt.frame
                 current_viewer_status ^= ~(_VIEWER_STATUS_MAP.TOGGLE_COORD_FRAME) # clear status
             ### transparency:
             if bool(current_viewer_status & _VIEWER_STATUS_MAP.TRANSPARENT):
@@ -462,20 +479,20 @@ class MujocoViewer:
             else:
                 self._mj.model.geom_rgba[:, 3] = 1.0
             ### visual features:
-            self._mj.vopt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = bool(current_viewer_status & _VIEWER_STATUS_MAP.CONTACTS)
-            self._mj.vopt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTFORCE] = bool(current_viewer_status & _VIEWER_STATUS_MAP.CONTACTS)
-            self._mj.vopt.flags[mujoco.mjtVisFlag.mjVIS_JOINT]        = bool(current_viewer_status & _VIEWER_STATUS_MAP.JOINTS)
-            self._mj.vopt.flags[mujoco.mjtVisFlag.mjVIS_COM]          = bool(current_viewer_status & _VIEWER_STATUS_MAP.INERTIAS)
-            self._mj.vopt.flags[mujoco.mjtVisFlag.mjVIS_INERTIA]      = bool(current_viewer_status & _VIEWER_STATUS_MAP.COM)
-            self._mj.vopt.flags[mujoco.mjtVisFlag.mjVIS_CONVEXHULL]   = bool(current_viewer_status & _VIEWER_STATUS_MAP.CONVEX_HULL_RENDERING)
+            self._mj.config.vopt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = bool(current_viewer_status & _VIEWER_STATUS_MAP.CONTACTS)
+            self._mj.config.vopt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTFORCE] = bool(current_viewer_status & _VIEWER_STATUS_MAP.CONTACTS)
+            self._mj.config.vopt.flags[mujoco.mjtVisFlag.mjVIS_JOINT]        = bool(current_viewer_status & _VIEWER_STATUS_MAP.JOINTS)
+            self._mj.config.vopt.flags[mujoco.mjtVisFlag.mjVIS_COM]          = bool(current_viewer_status & _VIEWER_STATUS_MAP.INERTIAS)
+            self._mj.config.vopt.flags[mujoco.mjtVisFlag.mjVIS_INERTIA]      = bool(current_viewer_status & _VIEWER_STATUS_MAP.COM)
+            self._mj.config.vopt.flags[mujoco.mjtVisFlag.mjVIS_CONVEXHULL]   = bool(current_viewer_status & _VIEWER_STATUS_MAP.CONVEX_HULL_RENDERING)
             ### OpenGL rendering effects.
-            self._mj.scn.flags[mujoco.mjtRndFlag.mjRND_WIREFRAME] = bool(current_viewer_status & _VIEWER_STATUS_MAP.WIRE_FRAME)
-            self._mj.scn.flags[mujoco.mjtRndFlag.mjRND_SHADOW]    = bool(current_viewer_status & _VIEWER_STATUS_MAP.SHADOWS)
+            self._mj.config.scn.flags[mujoco.mjtRndFlag.mjRND_WIREFRAME] = bool(current_viewer_status & _VIEWER_STATUS_MAP.WIRE_FRAME)
+            self._mj.config.scn.flags[mujoco.mjtRndFlag.mjRND_SHADOW]    = bool(current_viewer_status & _VIEWER_STATUS_MAP.SHADOWS)
             ### Geom Group:
-            self._mj.vopt.geomgroup[0] = bool(current_viewer_status & _VIEWER_STATUS_MAP.GROUP_0)
-            self._mj.vopt.geomgroup[1] = bool(current_viewer_status & _VIEWER_STATUS_MAP.GROUP_1)
-            self._mj.vopt.geomgroup[2] = bool(current_viewer_status & _VIEWER_STATUS_MAP.GROUP_2)
-            self._mj.vopt.geomgroup[3] = bool(current_viewer_status & _VIEWER_STATUS_MAP.GROUP_3)
+            self._mj.config.vopt.geomgroup[0] = bool(current_viewer_status & _VIEWER_STATUS_MAP.GROUP_0)
+            self._mj.config.vopt.geomgroup[1] = bool(current_viewer_status & _VIEWER_STATUS_MAP.GROUP_1)
+            self._mj.config.vopt.geomgroup[2] = bool(current_viewer_status & _VIEWER_STATUS_MAP.GROUP_2)
+            self._mj.config.vopt.geomgroup[3] = bool(current_viewer_status & _VIEWER_STATUS_MAP.GROUP_3)
             ### viewport dimension:
             self._mj.camera_data.mj_viewport.width, self._mj.camera_data.mj_viewport.height = frame_buffer_size
         
@@ -502,16 +519,16 @@ class MujocoViewer:
                 
         # - perturbation:
         new_perturb = 0
-        if if_mod_control and self._mj.pert.select > 0:
+        if if_mod_control and self._mj.config.pert.select > 0:
             # right: translate, left: rotate
             if current_mouse_data.button_right_pressed:
                 new_perturb = mujoco.mjtPertBit.mjPERT_TRANSLATE
             if current_mouse_data.button_left_pressed:
                 new_perturb = mujoco.mjtPertBit.mjPERT_ROTATE
             # perturbation: reset reference
-            if new_perturb and not self._mj.pert.active:
-                mujoco.mjv_initPerturb(self._mj.model, self._mj.data, self._mj.scn, self._mj.pert)
-        self._mj.pert.active = new_perturb
+            if new_perturb and not self._mj.config.pert.active:
+                mujoco.mjv_initPerturb(self._mj.model, self._mj.data, self._mj.config.scn, self._mj.config.pert)
+        self._mj.config.pert.active = new_perturb
         
         # - interaction:
         selection_mode = 0
@@ -535,11 +552,11 @@ class MujocoViewer:
                 selected_body = mujoco.mjv_select(
                     self._mj.model,
                     self._mj.data,
-                    self._mj.vopt,
+                    self._mj.config.vopt,
                     aspect_ratio,
                     rel_x,
                     rel_y,
-                    self._mj.scn,
+                    self._mj.config.scn,
                     selected_pnt,
                     selected_geom,
                     selected_skin
@@ -559,22 +576,22 @@ class MujocoViewer:
                 else:
                     if selected_body >= 0:
                         # record selection
-                        self._mj.pert.select = selected_body
-                        self._mj.pert.skinselect = selected_skin
+                        self._mj.config.pert.select = selected_body
+                        self._mj.config.pert.skinselect = selected_skin
                         # compute localpos
                         vec = selected_pnt.flatten() - self._mj.data.xpos[selected_body]
                         mat = self._mj.data.xmat[selected_body].reshape(3, 3)
-                        self._mj.pert.localpos = mat.dot(vec)
+                        self._mj.config.pert.localpos = mat.dot(vec)
                     else:
-                        self._mj.pert.select = 0
-                        self._mj.pert.skinselect = -1
+                        self._mj.config.pert.select = 0
+                        self._mj.config.pert.skinselect = -1
                 # stop perturbation on select
-                self._mj.pert.active = 0
+                self._mj.config.pert.active = 0
             
         if current_mouse_data.button_released:
             # 3D release
             with self._mj_lock:
-                self._mj.pert.active = 0
+                self._mj.config.pert.active = 0
 
         ### Camera ###
         if current_mouse_data.button_left_pressed or current_mouse_data.button_right_pressed:
@@ -592,27 +609,27 @@ class MujocoViewer:
             
             # - update:
             with self._mj_lock:
-                if self._mj.pert.active:
+                if self._mj.config.pert.active:
                     mujoco.mjv_movePerturb(
                         self._mj.model, self._mj.data,
                         mouse_action,
                         dx_pix / height,
                         dy_pix / height,
-                        self._mj.scn, self._mj.pert)
+                        self._mj.config.scn, self._mj.config.pert)
                 else:
                     mujoco.mjv_moveCamera(
                         self._mj.model,
                         mouse_action,
                         dx_pix / height,
                         dy_pix / height,
-                        self._mj.scn, self._mj.camera_data.mj_cam)
+                        self._mj.config.scn, self._mj.camera_data.mj_cam)
         # - zoom:
         with self._mj_lock:
             mujoco.mjv_moveCamera(
                 self._mj.model, 
                 mujoco.mjtMouse.mjMOUSE_ZOOM,
                 0, -0.05 * current_mouse_data.y_offset_transient, 
-                self._mj.scn, self._mj.camera_data.mj_cam)
+                self._mj.config.scn, self._mj.camera_data.mj_cam)
         
         with self._mouse_data_lock:
             self._mouse_data.y_offset_transient = 0
@@ -759,8 +776,8 @@ class MujocoViewer:
         """
         with self._mj_lock:
             self._mj.data.xfrc_applied = np.zeros_like(self._mj.data.xfrc_applied)
-            mujoco.mjv_applyPerturbPose(self._mj.model, self._mj.data, self._mj.pert, 0)
-            mujoco.mjv_applyPerturbForce(self._mj.model, self._mj.data, self._mj.pert)
+            mujoco.mjv_applyPerturbPose(self._mj.model, self._mj.data, self._mj.config.pert, 0)
+            mujoco.mjv_applyPerturbForce(self._mj.model, self._mj.data, self._mj.config.pert)
 
     def process_safe(self):
         """ Process: safely process configs from the physical / software modifications
@@ -786,18 +803,18 @@ class MujocoViewer:
         mujoco.mjv_updateScene(
             self._mj.model,
             self._mj.data,
-            self._mj.vopt,
-            self._mj.pert,
+            self._mj.config.vopt,
+            self._mj.config.pert,
             self._mj.camera_data.mj_cam,
             mujoco.mjtCatBit.mjCAT_ALL.value,
-            self._mj.scn
+            self._mj.config.scn
         )
         
         if is_on_scrn:
             # marker items
             with self._gui_lock:
                 for marker in self._gui_data.viewer_markers:
-                    self._add_marker_to_scene(marker, self._mj.scn)
+                    self._add_marker_to_scene(marker, self._mj.config.scn)
         
     
     def render_safe(self):
@@ -842,11 +859,11 @@ class MujocoViewer:
             mj_data_time = self._mj.data.time
             
             # render
-            mujoco.mjr_render(self._mj.camera_data.mj_viewport, self._mj.scn, self._mj.ctx)
+            mujoco.mjr_render(self._mj.camera_data.mj_viewport, self._mj.config.scn, self._mj.config.ctx)
             
             # read images:
             if if_capture_req:
-                mujoco.mjr_readPixels(img_buffer, None, self._mj.camera_data.mj_viewport, self._mj.ctx)
+                mujoco.mjr_readPixels(img_buffer, None, self._mj.camera_data.mj_viewport, self._mj.config.ctx)
                         
             # on-scrn render:
             if is_on_scrn:
@@ -861,7 +878,7 @@ class MujocoViewer:
                         mujoco.mjr_overlay(
                             mujoco.mjtFontScale.mjFONTSCALE_150,
                             gridpos, self._mj.camera_data.mj_viewport,
-                            t1, t2, self._mj.ctx
+                            t1, t2, self._mj.config.ctx
                         )
                 # render on screen:
                 with self._gui_lock:
@@ -889,49 +906,54 @@ class MujocoViewer:
             # reset capture flag:
             with self._viewer_config_lock:
                 if_capture_req = self._viewer_config.clear_viewer_status_unsafe(_VIEWER_STATUS_MAP.CAPTURE_SCRNSHOT)
-            
             # output:
             self.save_last_available_captured_scrnshot_safe()
     
         return
     
-    def render_sensor_cameras_safe(self, if_on_scrn_as_overlay=False):
+    def render_sensor_cameras_safe(self, if_on_scrn_as_overlay=False, if_segmentation=False):
         for camera_name, camera in self._camera_data.items():
+            self._camera_mj_config.scn.flags[mujoco.mjtRndFlag.mjRND_WIREFRAME] = False
+            self._camera_mj_config.scn.flags[mujoco.mjtRndFlag.mjRND_SHADOW]    = True
+            self._camera_mj_config.scn.flags[mujoco.mjtRndFlag.mjRND_SEGMENT] = if_segmentation
+            self._camera_mj_config.scn.flags[mujoco.mjtRndFlag.mjRND_IDCOLOR] = if_segmentation
             # update scene
             with self._mj_lock:
                 # change cam to the camera sensors 
-                # TODO: custom vopt and scn for camera sensors
                 mujoco.mjv_updateScene(
                     self._mj.model,
                     self._mj.data,
-                    self._mj.vopt,
-                    self._mj.pert,
+                    self._camera_mj_config.vopt,
+                    self._camera_mj_config.pert,
                     camera.mj_cam,
                     mujoco.mjtCatBit.mjCAT_ALL.value,
-                    self._mj.scn)
+                    self._camera_mj_config.scn)
             
             # render off-screen
             with self._camera_data_lock:
-                mujoco.mjr_render(camera.mj_viewport, self._mj.scn, self._mj.ctx)
+                mujoco.mjr_render(camera.mj_viewport, self._camera_mj_config.scn, self._camera_mj_config.ctx)
 
-        # cache:
-        for camera_name, camera in self._camera_data.items():
-            with self._camera_data_lock:
-                with self._mj_lock:
-                    mujoco.mjr_readPixels(camera.frame_buffer, None, camera.mj_viewport, self._mj.ctx)
-                    camera.frame_stamp = self._gui_data.frame_stamp
+                # cache:
+                mujoco.mjr_readPixels(camera.frame_buffer, camera.depth_buffer, camera.mj_viewport, self._camera_mj_config.ctx)
+                camera.frame_stamp = self._gui_data.frame_stamp
+                
 
-    def acquire_sensor_camera_frames_safe(self, write_to=None):
-        camera_buffers = {"frame_buffer":{}, "frame_stamp":{}}
+    def acquire_sensor_camera_frames_safe(self):
+        camera_buffers = {"frame_buffer":{}, "depth_buffer":{}, "frame_stamp":{}}
         with self._camera_data_lock:
             for camera_name, camera in self._camera_data.items():
+                camera_buffers["depth_buffer"][camera_name] = copy.deepcopy(camera.depth_buffer)
                 camera_buffers["frame_buffer"][camera_name] = copy.deepcopy(camera.frame_buffer)
                 camera_buffers["frame_stamp"][camera_name] = copy.deepcopy(camera.frame_stamp)
-                if write_to:
-                    imageio.imwrite(
-                        "{}/{}.png".format(write_to, camera_name.replace("\\", "_")), 
-                        camera_buffers["frame_buffer"][camera_name]
-                    )
+                # if write_to: [NOT-USED: Implementation to save frames directly]
+                #     imageio.imwrite(
+                #         "{}/{}.png".format(write_to, camera_name.replace("\\", "_")), 
+                #         camera_buffers["frame_buffer"][camera_name]
+                #     )
+                #     imageio.imwrite(
+                #         "{}/{}_gray.png".format(write_to, camera_name.replace("\\", "_")), 
+                #         camera_buffers["depth_buffer"][camera_name]
+                #     )
         return camera_buffers
 
     def save_last_available_captured_scrnshot_safe(self):
