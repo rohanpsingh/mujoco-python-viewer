@@ -14,7 +14,7 @@ class MujocoViewer(Callbacks):
             title="mujoco-python-viewer",
             width=None,
             height=None,
-            hide_menus=True):
+            hide_menus=False):
         super().__init__(hide_menus)
 
         self.model = model
