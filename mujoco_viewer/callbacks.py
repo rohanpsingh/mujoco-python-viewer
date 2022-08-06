@@ -81,8 +81,8 @@ class Callbacks:
             self.vopt.flags[mujoco.mjtVisFlag.mjVIS_JOINT] = self._joints
         # Display mjtFrame
         elif key == glfw.KEY_E:
-            self.vopt.frame+=1
-            if self.vopt.frame==mujoco.mjtFrame.mjNFRAME.value:
+            self.vopt.frame += 1
+            if self.vopt.frame == mujoco.mjtFrame.mjNFRAME.value:
                 self.vopt.frame = 0
         # Hide overlay menu
         elif key == glfw.KEY_LEFT_ALT:
@@ -119,7 +119,7 @@ class Callbacks:
             self._wire_frame = not self._wire_frame
             self.scn.flags[mujoco.mjtRndFlag.mjRND_WIREFRAME] = self._wire_frame
         # Geom group visibility
-        elif key in (glfw.KEY_0, glfw.KEY_1, glfw.KEY_2, glfw.KEY_3, glfw.KEY_4):
+        elif key in (glfw.KEY_0, glfw.KEY_1, glfw.KEY_2, glfw.KEY_3, glfw.KEY_4, glfw.KEY_5):
             self.vopt.geomgroup[key - glfw.KEY_0] ^= 1
         # Quit
         if key == glfw.KEY_ESCAPE:

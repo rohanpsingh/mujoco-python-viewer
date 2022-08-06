@@ -199,14 +199,15 @@ class MujocoViewer(Callbacks):
         add_overlay(
             topleft,
             "Referenc[e] frames",
-            "On" if self.vopt.frame != 0 else "Off")
+            mujoco.mjtFrame(self.vopt.frame).name)
         add_overlay(topleft, "[H]ide Menus", "")
         if self._image_idx > 0:
             fname = self._image_path % (self._image_idx - 1)
             add_overlay(topleft, "Cap[t]ure frame", "Saved as %s" % fname)
         else:
             add_overlay(topleft, "Cap[t]ure frame", "")
-        add_overlay(topleft, "Toggle geomgroup visibility", "0-4")
+        add_overlay(topleft, "Toggle geomgroup visibility (0-5)",
+                    ",".join(["On" if g else "Off" for g in self.vopt.geomgroup]))
 
         add_overlay(
             bottomleft, "FPS", "%d%s" %
