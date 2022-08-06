@@ -199,7 +199,7 @@ class MujocoViewer(Callbacks):
         add_overlay(
             topleft,
             "Referenc[e] frames",
-            "On" if self.vopt.frame == 1 else "Off")
+            "On" if self.vopt.frame != 0 else "Off")
         add_overlay(topleft, "[H]ide Menus", "")
         if self._image_idx > 0:
             fname = self._image_path % (self._image_idx - 1)
