@@ -196,6 +196,8 @@ class MujocoViewer(Callbacks):
                     topleft,
                     "Advance simulation by one step",
                     "[right arrow]")
+        add_overlay(topleft, "Toggle geomgroup visibility (0-5)",
+                    ",".join(["On" if g else "Off" for g in self.vopt.geomgroup]))
         add_overlay(
             topleft,
             "Referenc[e] frames",
@@ -206,8 +208,6 @@ class MujocoViewer(Callbacks):
             add_overlay(topleft, "Cap[t]ure frame", "Saved as %s" % fname)
         else:
             add_overlay(topleft, "Cap[t]ure frame", "")
-        add_overlay(topleft, "Toggle geomgroup visibility (0-5)",
-                    ",".join(["On" if g else "Off" for g in self.vopt.geomgroup]))
 
         add_overlay(
             bottomleft, "FPS", "%d%s" %
