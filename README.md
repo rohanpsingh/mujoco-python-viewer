@@ -22,3 +22,6 @@ $ git clone https://github.com/jaku-jaku/jx-mujoco-python-viewer
 $ cd jx-mujoco-python-viewer
 $ pip install -e .
 ```
+
+## Demo (WIP):
+- https://github.com/UW-Advanced-Robotics-Lab/simulation-mujoco-summit-wam
