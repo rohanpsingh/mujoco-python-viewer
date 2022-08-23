@@ -10,7 +10,7 @@ jobs:
         with:
           args: $(git ls-files '*.py') --recursive --in-place --aggressive --aggressive .
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v4.1.1
         with:
           commit-message: autopep8 action fixes
           title: Fixes by autopep8 action
@@ -19,3 +19,4 @@ jobs:
           reviewers: rohanpsingh
           branch: autopep8-patches
           base: ${{ github.head_ref }}
+          delete-branch: true
