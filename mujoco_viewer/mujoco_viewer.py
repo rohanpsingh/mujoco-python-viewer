@@ -2,6 +2,8 @@ import mujoco
 import glfw
 import numpy as np
 import time
+import pathlib
+import yaml
 from .callbacks import Callbacks
 
 
@@ -26,6 +28,9 @@ class MujocoViewer(Callbacks):
 
         # keep true while running
         self.is_alive = True
+
+        self.CONFIG_PATH = pathlib.Path.joinpath(
+            pathlib.Path.home(), ".config/mujoco_viewer/config.yaml")
 
         # glfw init
         glfw.init()
@@ -67,6 +72,43 @@ class MujocoViewer(Callbacks):
         self.pert = mujoco.MjvPerturb()
         self.ctx = mujoco.MjrContext(
             self.model, mujoco.mjtFontScale.mjFONTSCALE_150.value)
+
+        # load camera from configuration (if available)
+        pathlib.Path(
+            self.CONFIG_PATH.parent).mkdir(
+            parents=True,
+            exist_ok=True)
+        pathlib.Path(self.CONFIG_PATH).touch(exist_ok=True)
+        with open(self.CONFIG_PATH, "r") as f:
+            try:
+                cam_config = {
+                    "type": self.cam.type,
+                    "fixedcamid": self.cam.fixedcamid,
+                    "trackbodyid": self.cam.trackbodyid,
+                    "lookat": self.cam.lookat.tolist(),
+                    "distance": self.cam.distance,
+                    "azimuth": self.cam.azimuth,
+                    "elevation": self.cam.elevation
+                }
+                load_config = yaml.safe_load(f)
+                if isinstance(load_config, dict):
+                    for key, val in load_config.items():
+                        if key in cam_config.keys():
+                            cam_config[key] = val
+                if cam_config["type"] == mujoco.mjtCamera.mjCAMERA_FIXED:
+                    if cam_config["fixedcamid"] < self.model.ncam:
+                        self.cam.type = cam_config["type"]
+                        self.cam.fixedcamid = cam_config["fixedcamid"]
+                if cam_config["type"] == mujoco.mjtCamera.mjCAMERA_TRACKING:
+                    if cam_config["trackbodyid"] < self.model.nbody:
+                        self.cam.type = cam_config["type"]
+                        self.cam.trackbodyid = cam_config["trackbodyid"]
+                self.cam.lookat = np.array(cam_config["lookat"])
+                self.cam.distance = cam_config["distance"]
+                self.cam.azimuth = cam_config["azimuth"]
+                self.cam.elevation = cam_config["elevation"]
+            except yaml.YAMLError as e:
+                print(e)
 
         # get viewport
         self.viewport = mujoco.MjrRect(

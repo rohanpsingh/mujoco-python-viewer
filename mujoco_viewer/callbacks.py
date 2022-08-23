@@ -2,6 +2,7 @@ import mujoco
 import glfw
 import numpy as np
 import imageio
+import yaml
 from threading import Lock
 
 
@@ -54,7 +55,7 @@ class Callbacks:
             self._advance_by_one_step = True
             self._paused = True
         # Slows down simulation
-        elif key == glfw.KEY_S:
+        elif key == glfw.KEY_S and mods != glfw.MOD_CONTROL:
             self._run_speed /= 2.0
         # Speeds up simulation
         elif key == glfw.KEY_F:
@@ -121,6 +122,22 @@ class Callbacks:
         # Geom group visibility
         elif key in (glfw.KEY_0, glfw.KEY_1, glfw.KEY_2, glfw.KEY_3, glfw.KEY_4, glfw.KEY_5):
             self.vopt.geomgroup[key - glfw.KEY_0] ^= 1
+        elif key == glfw.KEY_S and mods == glfw.MOD_CONTROL:
+            cam_config = {
+                "type": self.cam.type,
+                "fixedcamid": self.cam.fixedcamid,
+                "trackbodyid": self.cam.trackbodyid,
+                "lookat": self.cam.lookat.tolist(),
+                "distance": self.cam.distance,
+                "azimuth": self.cam.azimuth,
+                "elevation": self.cam.elevation
+            }
+            try:
+                with open(self.CONFIG_PATH, "w") as f:
+                    yaml.dump(cam_config, f)
+                print("Camera config saved at {}".format(self.CONFIG_PATH))
+            except Exception as e:
+                print(e)
         # Quit
         if key == glfw.KEY_ESCAPE:
             print("Pressed ESC")
