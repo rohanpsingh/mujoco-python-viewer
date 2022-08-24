@@ -41,7 +41,7 @@ class Callbacks:
         if key == glfw.KEY_LEFT_SHIFT:
             self._left_shift_pressed = not self._left_shift_pressed
 
-        if self._left_shift_pressed and key in [glfw.KEY_1, glfw.KEY_2, glfw.KEY_3, glfw.KEY_4]:
+        if self._left_shift_pressed and key != glfw.KEY_LEFT_SHIFT:
             self.user_option_pressed = chr(key)
         elif action != glfw.RELEASE:
             if key == glfw.KEY_LEFT_ALT:
