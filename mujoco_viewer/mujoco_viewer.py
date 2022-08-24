@@ -118,6 +118,9 @@ class MujocoViewer(Callbacks):
         self._overlay = {}
         self._markers = []
 
+    def set_title(self, new_title):
+        glfw.set_window_title(self.window, new_title)
+
     def add_marker(self, **marker_params):
         self._markers.append(marker_params)
 
