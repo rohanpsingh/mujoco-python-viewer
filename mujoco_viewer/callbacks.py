@@ -35,6 +35,14 @@ class Callbacks:
         self._advance_by_one_step = False
         self._hide_menus = hide_menus
 
+    def save_screenshot(self, file_name):
+        img = np.zeros(
+            (glfw.get_framebuffer_size(
+                self.window)[1], glfw.get_framebuffer_size(
+                self.window)[0], 3), dtype=np.uint8)
+        mujoco.mjr_readPixels(img, None, self.viewport, self.ctx)
+        imageio.imwrite(file_name, np.flipud(img))
+
     def _key_callback(self, window, key, scancode, action, mods):
         if action != glfw.RELEASE:
             if key == glfw.KEY_LEFT_ALT:
@@ -65,12 +73,7 @@ class Callbacks:
             self._render_every_frame = not self._render_every_frame
         # Capture screenshot
         elif key == glfw.KEY_T:
-            img = np.zeros(
-                (glfw.get_framebuffer_size(
-                    self.window)[1], glfw.get_framebuffer_size(
-                    self.window)[0], 3), dtype=np.uint8)
-            mujoco.mjr_readPixels(img, None, self.viewport, self.ctx)
-            imageio.imwrite(self._image_path % self._image_idx, np.flipud(img))
+            self.save_screenshot(self._image_path % self._image_idx)
             self._image_idx += 1
         # Display contact forces
         elif key == glfw.KEY_C:
