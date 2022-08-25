@@ -67,6 +67,11 @@ img = viewer.read_pixels(camid=2)
 ## do something cool with img
 ```
 
+# Other features
+1. You can save a screenshot of the viewer programmatically:
+   `viewer.save_screenshot('path/to/save.png')`.
+
+
 # Optional Parameters
 
 - `title`: set the title of the window, for example: `viewer = mujoco_viewer.MujocoViewer(model, data, title='My Demo')` (defaults to `mujoco-python-viewer`). 
