@@ -70,8 +70,36 @@ class MujocoViewer(Callbacks):
         self.cam = mujoco.MjvCamera()
         self.scn = mujoco.MjvScene(self.model, maxgeom=10000)
         self.pert = mujoco.MjvPerturb()
+        self.fig = mujoco.MjvFigure()
+        mujoco.mjv_defaultFigure(self.fig)
+        
+        # Points for sampling of sensors... dictates smoothness of graph
+        self._num_pnts = 100
+        self._data_graph_line_names = []
+        self._line_datas = []
+        
+        for n in range(0, len(self.model.sensor_adr) * 3):
+            for i in range(0, 300):
+                self.fig.linedata[n][2 * i] = float(-i)
+        
         self.ctx = mujoco.MjrContext(
             self.model, mujoco.mjtFontScale.mjFONTSCALE_150.value)
+        
+        # Adjust placement and size of graph
+        width, height = glfw.get_framebuffer_size(self.window)
+        width_adjustment = width % 4
+        self.graph_viewport = mujoco.MjrRect(
+            int(3 * width / 4) + width_adjustment,
+            0,
+            int(width / 4),
+            int(height / 4),
+        )
+        mujoco.mjr_figure(self.graph_viewport, self.fig, self.ctx)
+        self.fig.flg_extend = 1
+        self.fig.flg_symmetric = 0
+        
+        # Makes the graph to be in autorange
+        self.axis_autorange()
 
         # load camera from configuration (if available)
         pathlib.Path(
@@ -117,7 +145,110 @@ class MujocoViewer(Callbacks):
         # overlay, markers
         self._overlay = {}
         self._markers = []
+
+    def set_grid_divisions(self, x_div: int, y_div: int, x_axis_time: float = 0.0, override=False):
+        if override is False:
+            assert x_axis_time >= self.model.opt.timestep * 50, "Set [x_axis_time] >= [self.model.opt.timestep * 50], inorder to get a suitable sampling rate"  
+        self.fig.gridsize[0] = x_div + 1
+        self.fig.gridsize[1] = y_div + 1
+        if x_axis_time != 0.0:
+            self._num_pnts = x_axis_time / self.model.opt.timestep
+            print("self._num_pnts: ", self._num_pnts)
+            if self._num_pnts > 300:
+                self._num_pnts = 300
+                new_x_axis_time = self.model.opt.timestep * self._num_pnts
+                print(
+                    f"Minimum x_axis_time is: {new_x_axis_time}"
+                    + " reduce the x_axis_time"
+                    f" OR Maximum time_step is: "
+                    + f"{self.model.opt.timestep*self._num_pnts}"
+                    + " increase the timestep"
+                )
+                # assert x_axis_time ==
+            assert 1 <= self._num_pnts <= 300, (
+                "num_pnts should be [10,300], it is currently:",
+                f"{self._num_pnts}",
+            )
+            # self._num_pnts = num_pnts
+            self._time_per_div = (self.model.opt.timestep * self._num_pnts) / (
+                x_div
+            )
+            self.set_x_label(
+                xname=f"time/div: {self._time_per_div}s"
+                + f" total: {self.model.opt.timestep * self._num_pnts}"
+            )
+    
+    def axis_autorange(self):
+        """
+        Call this function to auto-range the graph 
+        """
+        self.fig.range[0][0] = 1.0
+        self.fig.range[0][1] = -1.0
+        self.fig.range[1][0] = 1.0
+        self.fig.range[1][1] = -1.0
+
+    def set_graph_name(self, name: str):
+        assert type(name) == str, "name is not a string"
+        self.fig.title = name
+
+    def show_graph_legend(self, show_legend: bool = True):
+        if show_legend is True:
+            for i in range(0, len(self._data_graph_line_names)):
+                self.fig.linename[i] = self._data_graph_line_names[i]
+            self.fig.flg_legend = True
+
+    def set_x_label(self, xname: str):
+        assert type(xname) == str, "xname is not a string"
+        self.fig.xlabel = xname
+
+    def add_graph_line(self, line_name, line_data=0.0):
+        assert (
+            type(line_name) == str
+        ), f"Line_name is not a string: {type(line_name)}"
+        if line_name in self._data_graph_line_names:
+            print("line name already exists")
+        else:
+            self._data_graph_line_names.append(line_name)
+            self._line_datas.append(line_data)
+
+    def update_graph_line(self, line_name, line_data):
+        if line_name in self._data_graph_line_names:
+            idx = self._data_graph_line_names.index(line_name)
+            self._line_datas[idx] = line_data
+        else:
+            raise NameError(
+                "line name is not valid, add it to list before calling update"
+            )
+
+    def sensorupdate(self):
+        pnt = int(mujoco.mju_min(self._num_pnts, self.fig.linepnt[0] + 1))
         
+        for n in range(0, len(self._line_datas)):
+            for i in range(pnt - 1, 0, -1):
+                self.fig.linedata[n][2 * i + 1] = self.fig.linedata[n][
+                    2 * i - 1
+                ]
+            self.fig.linepnt[n] = pnt
+            self.fig.linedata[n][1] = self._line_datas[n]
+            
+    def update_graph_size(self, size_div_x=None, size_div_y=None):
+        if size_div_x is None and size_div_y is None:
+            width, height = glfw.get_framebuffer_size(self.window)
+            width_adjustment = width % 3
+            self.graph_viewport.left = int(2 * width / 3) + width_adjustment
+            self.graph_viewport.width = int(width / 3)
+            self.graph_viewport.height = int(height / 3)
+
+        else:
+            assert size_div_x is not None and size_div_y is None, ""
+            width, height = glfw.get_framebuffer_size(self.window)
+            width_adjustment = width % size_div_x
+            self.graph_viewport.left = (
+                int((size_div_x - 1) * width / size_div_x) + width_adjustment
+            )
+            self.graph_viewport.width = int(width / size_div_x)
+            self.graph_viewport.height = int(height / size_div_x)
+
     def show_actuator_forces(
         self,
         site_list,
@@ -269,6 +400,10 @@ class MujocoViewer(Callbacks):
             "On" if self._joints else "Off")
         add_overlay(
             topleft,
+            "[G]raph Viewer",
+            "Off" if self._hide_graph else "On")
+        add_overlay(
+            topleft,
             "[I]nertia",
             "On" if self._inertias else "Off")
         add_overlay(
@@ -411,6 +546,27 @@ class MujocoViewer(Callbacks):
                         t1,
                         t2,
                         self.ctx)
+                
+                # Handle graph and pausing interactions
+                if (
+                    not self._paused
+                    and not self._hide_graph
+                ):
+                    self.sensorupdate()
+                    self.update_graph_size()
+                    mujoco.mjr_figure(
+                        self.graph_viewport, self.fig, self.ctx
+                    )
+                elif self._hide_graph and self._paused:
+                    self.update_graph_size()
+                elif not self._hide_graph and self._paused:
+                    mujoco.mjr_figure(
+                        self.graph_viewport, self.fig, self.ctx
+                    )
+                elif self._hide_graph and not self._paused:
+                    self.sensorupdate()
+                    self.update_graph_size()
+                
                 glfw.swap_buffers(self.window)
             glfw.poll_events()
             self._time_per_render = 0.9 * self._time_per_render + \

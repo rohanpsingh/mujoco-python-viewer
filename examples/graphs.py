@@ -57,7 +57,25 @@ data = mujoco.MjData(model)
 # create the viewer object
 viewer = mujoco_viewer.MujocoViewer(model, data)
 
-for _ in range(10000):
+
+# Initialize the graph lines
+viewer.add_graph_line(line_name="line_1")
+viewer.add_graph_line(line_name="downscaled_force_sensor")
+viewer.add_graph_line(line_name="position_sensor")
+
+# Initialize the Legend
+viewer.show_graph_legend(show_legend=True)
+
+# For a time-based graph, 
+# x_axis_time is the total time that you want your viewing window to see
+# It needs to be set to grater than [model.opt.timestep*50]
+# If you want to over ride that, change the "override" parameter to True
+viewer.set_grid_divisions(x_div=5,
+                          y_div=4,
+                          x_axis_time=model.opt.timestep * 1000,
+                          override=True)
+
+for i in range(10000):
     # Render forces
     viewer.show_actuator_forces(
         site_list=["site_1", "site_2", "site_3"],
@@ -67,6 +85,10 @@ for _ in range(10000):
         arrow_radius=0.05,
         show_force_labels=True,
     )
+
+    viewer.update_graph_line(line_name="line_1", line_data=math.sin(i / 10.0))
+    viewer.update_graph_line(line_name="downscaled_force_sensor", line_data=data.actuator_force[0]/100.0)
+    viewer.update_graph_line(line_name="position_sensor", line_data=data.sensordata[0])
 
     # step and render
     mujoco.mj_step(model, data)
