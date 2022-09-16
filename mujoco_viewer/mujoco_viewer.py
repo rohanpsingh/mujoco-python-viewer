@@ -117,6 +117,68 @@ class MujocoViewer(Callbacks):
         # overlay, markers
         self._overlay = {}
         self._markers = []
+        
+    def show_actuator_forces(
+        self,
+        site_list,
+        actuator_list,
+        rgba_list=[1, 0, 1, 1],
+        force_scale=0.05,
+        arrow_radius=0.03,
+        show_force_labels=False,
+    ) -> None:
+        if show_force_labels is False:
+            for i in range(0, len(site_list)):
+                self.add_marker(
+                    pos=self.data.site(i).xpos,
+                    mat=self.data.site(i).xmat,
+                    size=[
+                        arrow_radius,
+                        arrow_radius,
+                        self.data.actuator_force[
+                            mujoco.mj_name2id(
+                                self.model,
+                                mujoco.mjtObj.mjOBJ_ACTUATOR,
+                                actuator_list[i],
+                            )
+                        ]
+                        * force_scale,
+                    ],
+                    rgba=rgba_list,
+                    type=mujoco.mjtGeom.mjGEOM_ARROW,
+                    label="",
+                )
+        else:
+            for i in range(0, len(site_list)):
+                self.add_marker(
+                    pos=self.data.site(i).xpos,
+                    mat=self.data.site(i).xmat,
+                    size=[
+                        arrow_radius,
+                        arrow_radius,
+                        self.data.actuator_force[
+                            mujoco.mj_name2id(
+                                self.model,
+                                mujoco.mjtObj.mjOBJ_ACTUATOR,
+                                actuator_list[i],
+                            )
+                        ]
+                        * force_scale,
+                    ],
+                    rgba=rgba_list,
+                    type=mujoco.mjtGeom.mjGEOM_ARROW,
+                    label=str(actuator_list[i])
+                    + ":"
+                    + str(
+                        self.data.actuator_force[
+                            mujoco.mj_name2id(
+                                self.model,
+                                mujoco.mjtObj.mjOBJ_ACTUATOR,
+                                actuator_list[i],
+                            )
+                        ]
+                    ),
+                )
 
     def add_marker(self, **marker_params):
         self._markers.append(marker_params)
