@@ -18,6 +18,8 @@ class MujocoViewer(Callbacks):
             height=None,
             hide_menus=False):
         super().__init__(hide_menus)
+        if hide_menus is True:
+            self._hide_graph = True
 
         self.model = model
         self.data = data

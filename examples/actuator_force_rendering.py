@@ -55,7 +55,7 @@ model = mujoco.MjModel.from_xml_string(MODEL_XML)
 data = mujoco.MjData(model)
 
 # create the viewer object
-viewer = mujoco_viewer.MujocoViewer(model, data)
+viewer = mujoco_viewer.MujocoViewer(model, data, hide_menus=True)
 
 for _ in range(10000):
     # Render forces
