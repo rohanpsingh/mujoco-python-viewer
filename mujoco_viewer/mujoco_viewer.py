@@ -266,14 +266,7 @@ class MujocoViewer(Callbacks):
                     size=[
                         arrow_radius,
                         arrow_radius,
-                        self.data.actuator_force[
-                            mujoco.mj_name2id(
-                                self.model,
-                                mujoco.mjtObj.mjOBJ_ACTUATOR,
-                                actuator_list[i],
-                            )
-                        ]
-                        * force_scale,
+                        self.data.actuator(actuator_list[i]).force* force_scale,
                     ],
                     rgba=rgba_list,
                     type=mujoco.mjtGeom.mjGEOM_ARROW,
@@ -287,14 +280,7 @@ class MujocoViewer(Callbacks):
                     size=[
                         arrow_radius,
                         arrow_radius,
-                        self.data.actuator_force[
-                            mujoco.mj_name2id(
-                                self.model,
-                                mujoco.mjtObj.mjOBJ_ACTUATOR,
-                                actuator_list[i],
-                            )
-                        ]
-                        * force_scale,
+                        self.data.actuator(actuator_list[i]).force* force_scale,
                     ],
                     rgba=rgba_list,
                     type=mujoco.mjtGeom.mjGEOM_ARROW,
