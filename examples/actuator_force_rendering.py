@@ -23,9 +23,9 @@ MODEL_XML = """
                 <joint name="hinge_2" type="hinge" axis="0 1 0" />
                 <geom name="g_link_2" type="cylinder" size=".1 .5" pos="0 0 .5" euler="0 0 0" material="green" mass="1" />
                 <body name="link_3" pos=".2 0 1" euler="0 0 0">
-                    <joint name="hinge_3" type="hinge" axis="2 0 0" />
-                    <geom name="g_link_3" type="cylinder" size=".1 .5" pos="0 0 .5" euler="0 0 0" material="blue" mass="1" />
-                    <geom name="end_mass" type="sphere" size=".25" pos="0 0 1" euler="0 0 0" material="blue" mass="1" />
+                    <joint name="hinge_3" type="slide" axis="1 0 0" />
+                    <geom name="g_link_3" type="cylinder" size=".1 .5" pos="0.3 0 0" euler="0 90 0" material="blue" mass="1" />
+                    <geom name="end_mass" type="sphere" size=".25" pos="1 0 0" euler="0 0 0" material="blue" mass="1" />
                 </body>
             </body>
         </body>
@@ -55,6 +55,7 @@ for _ in range(10000):
     viewer.show_actuator_forces(
         actuator_list=["pos_servo_1", "pos_servo_2", "pos_servo_3"],
         joint_list=["hinge_1", "hinge_2", "hinge_3"],
+        label_list=["force_at_hinge_1", "force_at_hinge_2", "force_at_hinge_3"],
         rgba_list=[1, 0.5, 1, 0.5],
         force_scale=0.05,
         arrow_radius=0.05,

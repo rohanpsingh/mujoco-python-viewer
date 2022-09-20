@@ -255,6 +255,7 @@ class MujocoViewer(Callbacks):
         self,
         actuator_list,
         joint_list,
+        label_list,
         rgba_list=[1, 0, 1, 1],
         force_scale=0.05,
         arrow_radius=0.03,
@@ -263,7 +264,7 @@ class MujocoViewer(Callbacks):
         if show_force_labels is False:
             for i in range(0, len(actuator_list)):
                 self.add_marker(
-                    pos=self.data.site(i).xpos,
+                    pos=self.data.joint(joint_list[i]).xanchor,
                     mat=self.rotation_matrix_from_vectors(
                         vec1=[0.0, 0.0, 1.0],
                         vec2=self.data.joint(joint_list[i]).xaxis),
@@ -279,7 +280,7 @@ class MujocoViewer(Callbacks):
         else:
             for i in range(0, len(actuator_list)):
                 self.add_marker(
-                    pos=self.data.site(i).xpos,
+                    pos=self.data.joint(joint_list[i]).xanchor,
                     mat=self.rotation_matrix_from_vectors(
                         vec1=[0.0, 0.0, 1.0],
                         vec2=self.data.joint(joint_list[i]).xaxis),
@@ -290,7 +291,7 @@ class MujocoViewer(Callbacks):
                     ],
                     rgba=rgba_list,
                     type=mujoco.mjtGeom.mjGEOM_ARROW,
-                    label=str(actuator_list[i])
+                    label=label_list[i]
                     + ":"
                     + str(
                         self.data.actuator_force[
