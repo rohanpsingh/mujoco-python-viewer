@@ -6,10 +6,6 @@ MODEL_XML = """
 <?xml version="1.0" ?>
 <mujoco>
     <option gravity="0 0 -9.81" timestep="0.002" />
-    <default>
-        <site type="cylinder" size="0.01 0.03" zaxis="1 0 0" rgba="0.1 0.1 1 .1" />
-    </default>
-
     <asset>
         <material name="blue" rgba="0 0 1 1" />
         <material name="green" rgba="0 1 0 1" />
@@ -22,15 +18,12 @@ MODEL_XML = """
 
         <body name="link_1" pos="0 0 0" euler="90 0 0">
             <joint name="hinge_1" type="hinge" axis="1 0 0" />
-            <site name="site_1" />
             <geom name="g_link_1" type="cylinder" size=".1 .5" pos="0 0 .5" euler="0 0 0" material="red" mass="1" />
             <body name="link_2" pos=".2 0 1" euler="0 0 0">
-                <joint name="hinge_2" type="hinge" axis="1 0 0" />
-                <site name="site_2" />
+                <joint name="hinge_2" type="hinge" axis="0 1 0" />
                 <geom name="g_link_2" type="cylinder" size=".1 .5" pos="0 0 .5" euler="0 0 0" material="green" mass="1" />
                 <body name="link_3" pos=".2 0 1" euler="0 0 0">
-                    <joint name="hinge_3" type="hinge" axis="1 0 0" />
-                    <site name="site_3" />
+                    <joint name="hinge_3" type="hinge" axis="2 0 0" />
                     <geom name="g_link_3" type="cylinder" size=".1 .5" pos="0 0 .5" euler="0 0 0" material="blue" mass="1" />
                     <geom name="end_mass" type="sphere" size=".25" pos="0 0 1" euler="0 0 0" material="blue" mass="1" />
                 </body>
@@ -60,8 +53,8 @@ viewer = mujoco_viewer.MujocoViewer(model, data, hide_menus=True)
 for _ in range(10000):
     # Render forces
     viewer.show_actuator_forces(
-        site_list=["site_1", "site_2", "site_3"],
         actuator_list=["pos_servo_1", "pos_servo_2", "pos_servo_3"],
+        joint_list=["hinge_1", "hinge_2", "hinge_3"],
         rgba_list=[1, 0.5, 1, 0.5],
         force_scale=0.05,
         arrow_radius=0.05,

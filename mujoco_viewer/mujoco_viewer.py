@@ -253,18 +253,20 @@ class MujocoViewer(Callbacks):
 
     def show_actuator_forces(
         self,
-        site_list,
         actuator_list,
+        joint_list,
         rgba_list=[1, 0, 1, 1],
         force_scale=0.05,
         arrow_radius=0.03,
         show_force_labels=False,
     ) -> None:
         if show_force_labels is False:
-            for i in range(0, len(site_list)):
+            for i in range(0, len(actuator_list)):
                 self.add_marker(
                     pos=self.data.site(i).xpos,
-                    mat=self.data.site(i).xmat,
+                    mat=self.rotation_matrix_from_vectors(
+                        vec1=[0.0, 0.0, 1.0],
+                        vec2=self.data.joint(joint_list[i]).xaxis),
                     size=[
                         arrow_radius,
                         arrow_radius,
@@ -275,10 +277,12 @@ class MujocoViewer(Callbacks):
                     label="",
                 )
         else:
-            for i in range(0, len(site_list)):
+            for i in range(0, len(actuator_list)):
                 self.add_marker(
                     pos=self.data.site(i).xpos,
-                    mat=self.data.site(i).xmat,
+                    mat=self.rotation_matrix_from_vectors(
+                        vec1=[0.0, 0.0, 1.0],
+                        vec2=self.data.joint(joint_list[i]).xaxis),
                     size=[
                         arrow_radius,
                         arrow_radius,
@@ -591,3 +595,17 @@ class MujocoViewer(Callbacks):
         self.is_alive = False
         glfw.terminate()
         self.ctx.free()
+        
+    def rotation_matrix_from_vectors(self, vec1, vec2):
+        """ Find the rotation matrix that aligns vec1 to vec2
+        :param vec1: A 3d "source" vector
+        :param vec2: A 3d "destination" vector
+        :return mat: A transform matrix (3x3) which when applied to vec1, aligns it with vec2.
+        """
+        a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
+        v = np.cross(a, b)
+        c = np.dot(a, b)
+        s = np.linalg.norm(v)
+        kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+        rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
+        return rotation_matrix
