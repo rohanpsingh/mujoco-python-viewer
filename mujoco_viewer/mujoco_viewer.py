@@ -5,7 +5,8 @@ import time
 import pathlib
 import yaml
 from .callbacks import Callbacks
-
+# import imgui
+# from imgui.integrations.glfw import GlfwRenderer
 
 class MujocoViewer(Callbacks):
     def __init__(
@@ -50,6 +51,20 @@ class MujocoViewer(Callbacks):
             width, height, title, None, None)
         glfw.make_context_current(self.window)
         glfw.swap_interval(1)
+        
+        # IMGUI
+        # imgui.create_context()
+        # io = imgui.get_io()
+        # self.impl = GlfwRenderer(self.window)
+        
+        # widgets_basic_f1_1= 0.0
+        # changed, widgets_basic_f1_1 = imgui.slider_float(
+        #         label="slider float",
+        #         value=widgets_basic_f1_1,
+        #         min_value=0.0,
+        #         max_value=1.0,
+        #         format="ratio = %.3f",
+        #     )
 
         framebuffer_width, framebuffer_height = glfw.get_framebuffer_size(
             self.window)
@@ -253,55 +268,45 @@ class MujocoViewer(Callbacks):
 
     def show_actuator_forces(
         self,
-        actuator_list,
-        joint_list,
-        label_list,
+        f_render_list,
         rgba_list=[1, 0, 1, 1],
         force_scale=0.05,
         arrow_radius=0.03,
         show_force_labels=False,
     ) -> None:
         if show_force_labels is False:
-            for i in range(0, len(actuator_list)):
+            for i in range(0, len(f_render_list)):
                 self.add_marker(
-                    pos=self.data.joint(joint_list[i]).xanchor,
+                    pos=self.data.joint(f_render_list[i][0]).xanchor,
                     mat=self.rotation_matrix_from_vectors(
                         vec1=[0.0, 0.0, 1.0],
-                        vec2=self.data.joint(joint_list[i]).xaxis),
+                        vec2=self.data.joint(f_render_list[i][0]).xaxis),
                     size=[
                         arrow_radius,
                         arrow_radius,
-                        self.data.actuator(actuator_list[i]).force* force_scale,
+                        self.data.actuator(f_render_list[i][1]).force* force_scale,
                     ],
                     rgba=rgba_list,
                     type=mujoco.mjtGeom.mjGEOM_ARROW,
                     label="",
                 )
         else:
-            for i in range(0, len(actuator_list)):
+            for i in range(0, len(f_render_list)):
                 self.add_marker(
-                    pos=self.data.joint(joint_list[i]).xanchor,
+                    pos=self.data.joint(f_render_list[i][0]).xanchor,
                     mat=self.rotation_matrix_from_vectors(
                         vec1=[0.0, 0.0, 1.0],
-                        vec2=self.data.joint(joint_list[i]).xaxis),
+                        vec2=self.data.joint(f_render_list[i][0]).xaxis),
                     size=[
                         arrow_radius,
                         arrow_radius,
-                        self.data.actuator(actuator_list[i]).force* force_scale,
+                        self.data.actuator(f_render_list[i][1]).force* force_scale,
                     ],
                     rgba=rgba_list,
                     type=mujoco.mjtGeom.mjGEOM_ARROW,
-                    label=label_list[i]
+                    label=f_render_list[i][2]
                     + ":"
-                    + str(
-                        self.data.actuator_force[
-                            mujoco.mj_name2id(
-                                self.model,
-                                mujoco.mjtObj.mjOBJ_ACTUATOR,
-                                actuator_list[i],
-                            )
-                        ]
-                    ),
+                    + str(self.data.actuator(f_render_list[i][1]).force[0]),
                 )
 
     def add_marker(self, **marker_params):
@@ -559,7 +564,7 @@ class MujocoViewer(Callbacks):
                 elif self._hide_graph and not self._paused:
                     self.sensorupdate()
                     self.update_graph_size()
-                
+
                 glfw.swap_buffers(self.window)
             glfw.poll_events()
             self._time_per_render = 0.9 * self._time_per_render + \
@@ -594,6 +599,7 @@ class MujocoViewer(Callbacks):
 
     def close(self):
         self.is_alive = False
+        # self.impl.shutdown()
         glfw.terminate()
         self.ctx.free()
         
@@ -603,6 +609,10 @@ class MujocoViewer(Callbacks):
         :param vec2: A 3d "destination" vector
         :return mat: A transform matrix (3x3) which when applied to vec1, aligns it with vec2.
         """
+        # vec1 = np.array(vec1,dtype=object)
+        # vec2 = np.array(vec2,dtype=object)
+        print(f"vec1: {vec1}")
+        print(f"vec2: {vec2}")
         a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
         v = np.cross(a, b)
         c = np.dot(a, b)
