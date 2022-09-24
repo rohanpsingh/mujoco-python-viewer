@@ -5,8 +5,6 @@ import time
 import pathlib
 import yaml
 from .callbacks import Callbacks
-# import imgui
-# from imgui.integrations.glfw import GlfwRenderer
 
 class MujocoViewer(Callbacks):
     def __init__(
@@ -52,19 +50,6 @@ class MujocoViewer(Callbacks):
         glfw.make_context_current(self.window)
         glfw.swap_interval(1)
         
-        # IMGUI
-        # imgui.create_context()
-        # io = imgui.get_io()
-        # self.impl = GlfwRenderer(self.window)
-        
-        # widgets_basic_f1_1 = 0.0
-        # changed, widgets_basic_f1_1 = imgui.slider_float(
-        #         label="slider float",
-        #         value=widgets_basic_f1_1,
-        #         min_value=0.0,
-        #         max_value=1.0,
-        #         format="ratio = %.3f",
-        #     )
 
         framebuffer_width, framebuffer_height = glfw.get_framebuffer_size(
             self.window)
@@ -498,23 +483,6 @@ class MujocoViewer(Callbacks):
                 self.window)[0], 3), dtype=np.uint8)
         mujoco.mjr_readPixels(img, None, self.viewport, self.ctx)
         return np.flipud(img)
-    
-    # def on_frame(self):
-    #     if imgui.begin_main_menu_bar():
-    #         if imgui.begin_menu("File", True):
-    #             clicked_quit, selected_quit = imgui.menu_item(
-    #                 "Quit", 'Cmd+Q', False, True
-    #             )
-    #             if clicked_quit:
-    #                 exit(1)
-    #             imgui.end_menu()
-    #         imgui.end_main_menu_bar()
-    #     imgui.show_test_window()
-    #     imgui.core.set_next_window_position(1500, 0, condition=True, pivot_x=0, pivot_y=0)
-    #     imgui.begin("Custom window", True)
-    #     imgui.text("Bar")
-    #     imgui.text_colored("Eggs", 0.2, 1., 0.)
-    #     imgui.end()
 
     def render(self):
         if self.render_mode == 'offscreen':
@@ -584,13 +552,6 @@ class MujocoViewer(Callbacks):
                 elif self._hide_graph and not self._paused:
                     self.sensorupdate()
                     self.update_graph_size()
-                    
-                # self.impl.process_inputs()  # imgui inputs
-                # imgui.new_frame()           # render imgui frame
-                # self.on_frame()             # render imgui frame
-                # imgui.render()
-                # self.impl.render(imgui.get_draw_data())
-                # swap main glfw buffers
 
                 glfw.swap_buffers(self.window)
             glfw.poll_events()
@@ -626,7 +587,6 @@ class MujocoViewer(Callbacks):
 
     def close(self):
         self.is_alive = False
-        # self.impl.shutdown()
         glfw.terminate()
         self.ctx.free()
         
