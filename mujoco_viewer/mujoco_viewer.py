@@ -274,6 +274,9 @@ class MujocoViewer(Callbacks):
         arrow_radius=0.03,
         show_force_labels=False,
     ) -> None:
+        """f_render_list: [  ["jnt_name1","act_name_1","lable1"] ,
+                             ["jnt_name2","act_name_2","lable2"] ]
+        """
         if show_force_labels is False:
             for i in range(0, len(f_render_list)):
                 self.add_marker(

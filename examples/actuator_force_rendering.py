@@ -50,12 +50,16 @@ data = mujoco.MjData(model)
 # create the viewer object
 viewer = mujoco_viewer.MujocoViewer(model, data, hide_menus=True)
 
+f_render_list = [
+    ["hinge_1", "pos_servo_1", "force_at_hinge_1"],
+    ["hinge_2", "pos_servo_2", "force_at_hinge_2"],
+    ["hinge_3", "pos_servo_3", "force_at_hinge_3"],
+]
+
 for _ in range(10000):
     # Render forces
     viewer.show_actuator_forces(
-        actuator_list=["pos_servo_1", "pos_servo_2", "pos_servo_3"],
-        joint_list=["hinge_1", "hinge_2", "hinge_3"],
-        label_list=["force_at_hinge_1", "force_at_hinge_2", "force_at_hinge_3"],
+        f_render_list=f_render_list,
         rgba_list=[1, 0.5, 1, 0.5],
         force_scale=0.05,
         arrow_radius=0.05,
