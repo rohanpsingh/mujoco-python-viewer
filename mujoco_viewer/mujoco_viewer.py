@@ -5,8 +5,6 @@ import time
 import pathlib
 import yaml
 from .callbacks import Callbacks
-# import imgui
-# from imgui.integrations.glfw import GlfwRenderer
 
 class MujocoViewer(Callbacks):
     def __init__(
@@ -51,20 +49,7 @@ class MujocoViewer(Callbacks):
             width, height, title, None, None)
         glfw.make_context_current(self.window)
         glfw.swap_interval(1)
-        
-        # IMGUI
-        # imgui.create_context()
-        # io = imgui.get_io()
-        # self.impl = GlfwRenderer(self.window)
-        
-        # widgets_basic_f1_1= 0.0
-        # changed, widgets_basic_f1_1 = imgui.slider_float(
-        #         label="slider float",
-        #         value=widgets_basic_f1_1,
-        #         min_value=0.0,
-        #         max_value=1.0,
-        #         format="ratio = %.3f",
-        #     )
+
 
         framebuffer_width, framebuffer_height = glfw.get_framebuffer_size(
             self.window)
@@ -602,7 +587,6 @@ class MujocoViewer(Callbacks):
 
     def close(self):
         self.is_alive = False
-        # self.impl.shutdown()
         glfw.terminate()
         self.ctx.free()
         
