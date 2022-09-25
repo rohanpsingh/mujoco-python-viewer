@@ -119,6 +119,10 @@ class Callbacks:
             self.vopt.flags[
                 mujoco.mjtVisFlag.mjVIS_CONVEXHULL
             ] = self._convex_hull_rendering
+        # Reload Simulation 
+        elif key == glfw.KEY_BACKSPACE:
+            mujoco.mj_resetData(self.model_old, self.data_old)
+            mujoco.mj_forward(self.model_old, self.data_old)
         # Wireframe Rendering
         elif key == glfw.KEY_W:
             self._wire_frame = not self._wire_frame

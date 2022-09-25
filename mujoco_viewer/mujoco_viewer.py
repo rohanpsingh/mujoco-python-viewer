@@ -15,6 +15,8 @@ class MujocoViewer(Callbacks):
             title="mujoco-python-viewer",
             width=None,
             height=None,
+            window_start_x_pixel_offset=6,
+            window_start_y_pixel_offset=30,
             hide_menus=False):
         super().__init__(hide_menus)
         if hide_menus is True:
@@ -41,13 +43,21 @@ class MujocoViewer(Callbacks):
 
         if not height:
             _, height = glfw.get_video_mode(glfw.get_primary_monitor()).size
-
-        if self.render_mode == 'offscreen':
-            glfw.window_hint(glfw.VISIBLE, 0)
-
+            
+        # disable rendering, by default
+        glfw.window_hint(glfw.VISIBLE, 0)
         self.window = glfw.create_window(
             width, height, title, None, None)
         glfw.make_context_current(self.window)
+        glfw.set_window_pos(self.window, 
+                            window_x_pixel_offset,
+                            window_y_pixel_offset)
+        
+        # Select if offscreen or on window mode
+        if self.render_mode == 'offscreen':
+            glfw.window_hint(glfw.VISIBLE, 0)
+        else:
+            glfw.show_window(self.window)
         glfw.swap_interval(1)
         
 
@@ -433,7 +443,8 @@ class MujocoViewer(Callbacks):
             add_overlay(topleft, "Cap[t]ure frame", "Saved as %s" % fname)
         else:
             add_overlay(topleft, "Cap[t]ure frame", "")
-        add_overlay(topleft,"[ESC] to Quit Application","")
+        add_overlay(topleft, "[ESC] to Quit Application", "")
+        add_overlay(topleft, "[BACKSPACE] to Reload Sim", "")
 
         add_overlay(
             bottomleft, "FPS", "%d%s" %
