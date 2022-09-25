@@ -433,6 +433,7 @@ class MujocoViewer(Callbacks):
             add_overlay(topleft, "Cap[t]ure frame", "Saved as %s" % fname)
         else:
             add_overlay(topleft, "Cap[t]ure frame", "")
+        add_overlay(topleft,"[ESC] to Quit Application","")
 
         add_overlay(
             bottomleft, "FPS", "%d%s" %
