@@ -50,8 +50,8 @@ class MujocoViewer(Callbacks):
             width, height, title, None, None)
         glfw.make_context_current(self.window)
         glfw.set_window_pos(self.window, 
-                            window_x_pixel_offset,
-                            window_y_pixel_offset)
+                            window_start_x_pixel_offset,
+                            window_start_y_pixel_offset)
         
         # Select if offscreen or on window mode
         if self.render_mode == 'offscreen':
