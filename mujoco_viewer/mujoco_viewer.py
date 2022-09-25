@@ -86,12 +86,13 @@ class MujocoViewer(Callbacks):
         mujoco.mjv_defaultFigure(self.fig)
         
         # Points for sampling of sensors... dictates smoothness of graph
-        self._num_pnts = 100
+        # Do not exceed: self._num_pnts = 1000
+        self._num_pnts = 1000
         self._data_graph_line_names = []
         self._line_datas = []
         
-        for n in range(0, len(self.model.sensor_adr) * 3):
-            for i in range(0, 300):
+        for n in range(0, mujoco.mjMAXLINE):
+            for i in range(0, self._num_pnts):
                 self.fig.linedata[n][2 * i] = float(-i)
         
         self.ctx = mujoco.MjrContext(
@@ -166,8 +167,8 @@ class MujocoViewer(Callbacks):
         if x_axis_time != 0.0:
             self._num_pnts = x_axis_time / self.model.opt.timestep
             print("self._num_pnts: ", self._num_pnts)
-            if self._num_pnts > 300:
-                self._num_pnts = 300
+            if self._num_pnts > 1000:
+                self._num_pnts = 1000
                 new_x_axis_time = self.model.opt.timestep * self._num_pnts
                 print(
                     f"Minimum x_axis_time is: {new_x_axis_time}"
@@ -177,8 +178,8 @@ class MujocoViewer(Callbacks):
                     + " increase the timestep"
                 )
                 # assert x_axis_time ==
-            assert 1 <= self._num_pnts <= 300, (
-                "num_pnts should be [10,300], it is currently:",
+            assert 1 <= self._num_pnts <= 1000, (
+                "num_pnts should be [1000], it is currently:",
                 f"{self._num_pnts}",
             )
             # self._num_pnts = num_pnts
