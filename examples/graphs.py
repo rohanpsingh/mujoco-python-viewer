@@ -76,16 +76,6 @@ viewer.set_grid_divisions(x_div=5,
                           override=True)
 
 for i in range(10000):
-    # Render forces
-    viewer.show_actuator_forces(
-        site_list=["site_1", "site_2", "site_3"],
-        actuator_list=["pos_servo_1", "pos_servo_2", "pos_servo_3"],
-        rgba_list=[1, 0.5, 1, 0.5],
-        force_scale=0.05,
-        arrow_radius=0.05,
-        show_force_labels=True,
-    )
-
     viewer.update_graph_line(line_name="line_1", line_data=math.sin(i / 10.0))
     viewer.update_graph_line(line_name="downscaled_force_sensor", line_data=data.actuator_force[0]/100.0)
     viewer.update_graph_line(line_name="position_sensor", line_data=data.sensordata[0])
