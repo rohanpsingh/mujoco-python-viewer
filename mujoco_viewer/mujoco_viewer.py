@@ -294,13 +294,15 @@ class MujocoViewer(Callbacks):
         # render
         mujoco.mjr_render(self.viewport, self.scn, self.ctx)
         shape = glfw.get_framebuffer_size(self.window)
-        img = np.zeros((shape[1], shape[0], 3), dtype=np.float64)
+        
         
         if depth:
-            depth_img = np.zeros((shape[1], shape[0], 1), dtype=np.uint8)
+            img = np.zeros((shape[1], shape[0], 3), dtype=np.float64)
+            depth_img = np.zeros((shape[1], shape[0], 1), dtype=np.float64)
             mujoco.mjr_readPixels(img, depth_img, self.viewport, self.ctx)
-            return np.dstack((np.flipud(img),np.flipud(depth_img)),dtype=np.float64)
+            return np.dstack((np.flipud(img),np.flipud(depth_img)))
         else:
+            img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
             mujoco.mjr_readPixels(img, None, self.viewport, self.ctx)
             return np.flipud(img)
 
