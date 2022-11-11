@@ -299,7 +299,8 @@ class MujocoViewer(Callbacks):
         if depth:
             img = np.zeros((shape[1], shape[0], 3), dtype=np.float64)
             depth_img = np.zeros((shape[1], shape[0], 1), dtype=np.float64)
-            mujoco.mjr_readPixels(img, depth_img, self.viewport, self.ctx)
+            mujoco.mjr_readPixels(img, None, self.viewport, self.ctx)
+            mujoco.mjr_readPixels(None, depth_img, self.viewport, self.ctx)
             return np.dstack((np.flipud(img),np.flipud(depth_img)))
         else:
             img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
