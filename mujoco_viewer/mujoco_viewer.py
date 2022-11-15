@@ -268,7 +268,7 @@ class MujocoViewer(Callbacks):
         mujoco.mjv_applyPerturbPose(self.model, self.data, self.pert, 0)
         mujoco.mjv_applyPerturbForce(self.model, self.data, self.pert)
 
-    def read_pixels(self, camid=None,depth=False):
+    def read_pixels(self, camid=None, depth=False):
         if self.render_mode == 'window':
             raise NotImplementedError(
                 "Use 'render()' in 'window' mode.")
@@ -297,11 +297,10 @@ class MujocoViewer(Callbacks):
         
         
         if depth:
-            img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
+            rgb_img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
             depth_img = np.zeros((shape[1], shape[0], 1), dtype=np.float32)
-            mujoco.mjr_readPixels(img, None, self.viewport, self.ctx)
-            mujoco.mjr_readPixels(None, depth_img, self.viewport, self.ctx)
-            return (np.flipud(img),np.flipud(depth_img))
+            mujoco.mjr_readPixels(rgb_img, depth_img, self.viewport, self.ctx)
+            return (np.flipud(rgb_img), np.flipud(depth_img))
         else:
             img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
             mujoco.mjr_readPixels(img, None, self.viewport, self.ctx)
