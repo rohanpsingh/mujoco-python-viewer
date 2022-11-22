@@ -464,7 +464,7 @@ class MujocoViewer(Callbacks):
         mujoco.mjv_applyPerturbPose(self.model, self.data, self.pert, 0)
         mujoco.mjv_applyPerturbForce(self.model, self.data, self.pert)
 
-    def read_pixels(self, camid=None):
+    def read_pixels(self, camid=None, depth=False):
         if self.render_mode == 'window':
             raise NotImplementedError(
                 "Use 'render()' in 'window' mode.")
@@ -489,13 +489,19 @@ class MujocoViewer(Callbacks):
             self.scn)
         # render
         mujoco.mjr_render(self.viewport, self.scn, self.ctx)
+        shape = glfw.get_framebuffer_size(self.window)
+        
+        
+        if depth:
+            rgb_img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
+            depth_img = np.zeros((shape[1], shape[0], 1), dtype=np.float32)
+            mujoco.mjr_readPixels(rgb_img, depth_img, self.viewport, self.ctx)
+            return (np.flipud(rgb_img), np.flipud(depth_img))
+        else:
+            img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
+            mujoco.mjr_readPixels(img, None, self.viewport, self.ctx)
+            return np.flipud(img)
 
-        img = np.zeros(
-            (glfw.get_framebuffer_size(
-                self.window)[1], glfw.get_framebuffer_size(
-                self.window)[0], 3), dtype=np.uint8)
-        mujoco.mjr_readPixels(img, None, self.viewport, self.ctx)
-        return np.flipud(img)
 
     def render(self):
         if self.render_mode == 'offscreen':
