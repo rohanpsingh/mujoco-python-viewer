@@ -34,6 +34,8 @@ class Callbacks:
         self._loop_count = 0
         self._advance_by_one_step = False
         self._hide_menus = hide_menus
+        self._left_shift_pressed = False
+        self.user_option_pressed = None
 
     def save_screenshot(self, file_name):
         img = np.zeros(
@@ -44,7 +46,12 @@ class Callbacks:
         imageio.imwrite(file_name, np.flipud(img))
 
     def _key_callback(self, window, key, scancode, action, mods):
-        if action != glfw.RELEASE:
+        if key == glfw.KEY_LEFT_SHIFT:
+            self._left_shift_pressed = not self._left_shift_pressed
+
+        if self._left_shift_pressed and key != glfw.KEY_LEFT_SHIFT:
+            self.user_option_pressed = chr(key)
+        elif action != glfw.RELEASE:
             if key == glfw.KEY_LEFT_ALT:
                 self._hide_menus = False
             return
