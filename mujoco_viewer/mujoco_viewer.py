@@ -308,6 +308,7 @@ class MujocoViewer(Callbacks):
 
 
     def render(self):
+        glfw.make_context_current(self.window)
         if self.render_mode == 'offscreen':
             raise NotImplementedError(
                 "Use 'read_pixels()' for 'offscreen' mode.")
