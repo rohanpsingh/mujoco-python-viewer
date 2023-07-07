@@ -7,7 +7,8 @@ VERSION = '0.1.2'
 INSTALL_REQUIRES = (
     ['mujoco >= 2.1.5',
      'glfw >= 2.5.0',
-     'imageio']
+     'imageio',
+     'pyyaml']
 )
 
 setup(
