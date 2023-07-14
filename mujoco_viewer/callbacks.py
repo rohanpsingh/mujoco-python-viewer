@@ -18,6 +18,7 @@ class Callbacks:
         self._last_mouse_x = 0
         self._last_mouse_y = 0
         self._paused = False
+        self._hide_graph = False
         self._transparent = False
         self._contacts = False
         self._joints = False
@@ -97,6 +98,9 @@ class Callbacks:
                 self.model.geom_rgba[:, 3] /= 5.0
             else:
                 self.model.geom_rgba[:, 3] *= 5.0
+        # Toggle Graph overlay
+        elif key == glfw.KEY_G:
+            self._hide_graph = not self._hide_graph
         # Display inertia
         elif key == glfw.KEY_I:
             self._inertias = not self._inertias
@@ -115,6 +119,10 @@ class Callbacks:
             self.vopt.flags[
                 mujoco.mjtVisFlag.mjVIS_CONVEXHULL
             ] = self._convex_hull_rendering
+        # Reload Simulation 
+        elif key == glfw.KEY_BACKSPACE:
+            mujoco.mj_resetData(self.model, self.data)
+            mujoco.mj_forward(self.model, self.data)
         # Wireframe Rendering
         elif key == glfw.KEY_W:
             self._wire_frame = not self._wire_frame

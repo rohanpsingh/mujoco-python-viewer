@@ -72,4 +72,4 @@ img = viewer.read_pixels(camid=2)
 - `title`: set the title of the window, for example: `viewer = mujoco_viewer.MujocoViewer(model, data, title='My Demo')` (defaults to `mujoco-python-viewer`). 
 - `width`: set the window width, for example: `viewer = mujoco_viewer.MujocoViewer(model, data, width=300)` (defaults to full screen's width). 
 - `height`: set the window height, for example: `viewer = mujoco_viewer.MujocoViewer(model, data, height=300)` (defaults to full screen's height). 
-- `hide_menus`: set whether the overlay menus should be hidden or not (defaults to `False`).
+- `hide_menus`: set whether the overlay menus and graph should be hidden or not (defaults to `False`).
