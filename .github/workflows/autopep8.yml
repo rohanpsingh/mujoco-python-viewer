@@ -8,7 +8,7 @@ jobs:
       - name: autopep8
         uses: peter-evans/autopep8@v2.0.0
         with:
-          args: $(git ls-files '*.py') --recursive --in-place --aggressive --aggressive
+          args: --recursive --in-place $(git ls-files "*.py")
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4.1.1
         with:
