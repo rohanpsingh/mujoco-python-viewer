@@ -79,7 +79,6 @@ class MujocoViewer(Callbacks):
         # figures for creating 2D plots
         max_num_figs = 3
         self.figs = []
-        self.figs_viewport = []
         width_adjustment = width % 4
         fig_w, fig_h = int(width / 4), int(height / 4)
         for idx in range(max_num_figs):
@@ -87,11 +86,6 @@ class MujocoViewer(Callbacks):
             mujoco.mjv_defaultFigure(fig)
             fig.flg_extend = 1
             self.figs.append(fig)
-
-            x = int(3 * width / 4) + width_adjustment
-            y = idx*fig_h
-            vp = mujoco.MjrRect(x, y, fig_w, fig_h)
-            self.figs_viewport.append(vp)
 
         # load camera from configuration (if available)
         pathlib.Path(
@@ -174,7 +168,7 @@ class MujocoViewer(Callbacks):
                 "line name is not valid, add it to list before calling update"
             )
 
-        pnt = min(201, fig.linepnt[line_idx] + 1)
+        pnt = min(mujoco.mjMAXLINEPNT, fig.linepnt[line_idx] + 1)
         # shift data
         for i in range(pnt-1, 0, -1):
             fig.linedata[line_idx][2*i + 1] = fig.linedata[line_idx][2*i - 1]
@@ -396,14 +390,6 @@ class MujocoViewer(Callbacks):
             width, height = glfw.get_framebuffer_size(self.window)
             self.viewport.width, self.viewport.height = width, height
 
-            fig_w, fig_h = int(width / 4), int(height / 4)
-            width_adjustment = width % 4
-            for idx in range(len(self.figs_viewport)):
-                x = int(3 * width / 4) + width_adjustment
-                y = idx*fig_h
-                vp = mujoco.MjrRect(x, y, fig_w, fig_h)
-                self.figs_viewport[idx] = vp
-
             with self._gui_lock:
                 # update scene
                 mujoco.mjv_updateScene(
@@ -434,9 +420,15 @@ class MujocoViewer(Callbacks):
                         t2,
                         self.ctx)
 
-                # Handle graph and pausing interactions
+                # handle figures
                 if not self._hide_graph:
-                    for fig, viewport in zip(self.figs, self.figs_viewport):
+                    for idx, fig in enumerate(self.figs):
+                        width_adjustment = width % 4
+                        x = int(3 * width / 4) + width_adjustment
+                        y = idx * int(height / 4)
+                        viewport = mujoco.MjrRect(
+                            x, y, int(width / 4), int(height / 4))
+
                         has_lines = len([i for i in fig.linename if i!=b''])
                         if has_lines:
                             mujoco.mjr_figure(viewport, fig, self.ctx)
