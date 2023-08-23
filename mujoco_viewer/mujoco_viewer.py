@@ -70,27 +70,28 @@ class MujocoViewer(Callbacks):
         self.cam = mujoco.MjvCamera()
         self.scn = mujoco.MjvScene(self.model, maxgeom=10000)
         self.pert = mujoco.MjvPerturb()
-        self.fig = mujoco.MjvFigure()
-        mujoco.mjv_defaultFigure(self.fig)
-
-        # Counter for number of lines added to plot
-        self._line_counter = 0
 
         self.ctx = mujoco.MjrContext(
             self.model, mujoco.mjtFontScale.mjFONTSCALE_150.value)
 
-        # Adjust placement and size of graph
         width, height = glfw.get_framebuffer_size(self.window)
+
+        # figures for creating 2D plots
+        max_num_figs = 3
+        self.figs = []
+        self.figs_viewport = []
         width_adjustment = width % 4
-        self.graph_viewport = mujoco.MjrRect(
-            int(3 * width / 4) + width_adjustment,
-            0,
-            int(width / 4),
-            int(height / 4),
-        )
-        mujoco.mjr_figure(self.graph_viewport, self.fig, self.ctx)
-        self.fig.flg_extend = 1
-        self.fig.flg_symmetric = 0
+        fig_w, fig_h = int(width / 4), int(height / 4)
+        for idx in range(max_num_figs):
+            fig = mujoco.MjvFigure()
+            mujoco.mjv_defaultFigure(fig)
+            fig.flg_extend = 1
+            self.figs.append(fig)
+
+            x = int(3 * width / 4) + width_adjustment
+            y = idx*fig_h
+            vp = mujoco.MjrRect(x, y, fig_w, fig_h)
+            self.figs_viewport.append(vp)
 
         # load camera from configuration (if available)
         pathlib.Path(
@@ -137,59 +138,50 @@ class MujocoViewer(Callbacks):
         self._overlay = {}
         self._markers = []
 
-    def add_graph_line(self, line_name):
-        assert (
-            type(line_name) == str
-        ), f"Line_name is not a string: {type(line_name)}"
-        if line_name in []:
+    def add_line_to_fig(self, line_name, fig_idx = 0):
+        assert isinstance(line_name, str), \
+            "Line name must be a string."
+
+        fig = self.figs[fig_idx]
+        if line_name.encode('utf8') == b'':
             raise Exception(
-                "line name already exists"
+                "Line name cannot be empty."
+            )
+        if line_name.encode('utf8') in fig.linename:
+            raise Exception(
+                "Line name already exists in this plot."
             )
 
-        self.fig.linename[self._line_counter] = line_name
-        for i in range(mujoco.mjMAXLINEPNT):
-            self.fig.linedata[self._line_counter][2*i] = float(i)
-        self.fig.linepnt[self._line_counter] = 0
-        self._line_counter+=1
+        # this assumes all lines added by user have a non-empty name
+        linecount = fig.linename.tolist().index(b'')
 
-    def update_graph_line(self, line_name, line_data):
+        # we want to add the line after the last non-empty index
+        fig.linename[linecount] = line_name
+
+        # assign x values
+        for i in range(mujoco.mjMAXLINEPNT):
+            fig.linedata[linecount][2*i] = -float(i)
+
+    def add_data_to_line(self, line_name, line_data, fig_idx = 0):
+        fig = self.figs[fig_idx]
+
         try:
             _line_name = line_name.encode('utf8')
-            linenames = self.fig.linename.tolist()
+            linenames = fig.linename.tolist()
             line_idx = linenames.index(_line_name)
         except ValueError:
             raise Exception(
                 "line name is not valid, add it to list before calling update"
             )
 
-        _x = self.fig.linepnt[line_idx]
+        pnt = min(201, fig.linepnt[line_idx] + 1)
+        # shift data
+        for i in range(pnt-1, 0, -1):
+            fig.linedata[line_idx][2*i + 1] = fig.linedata[line_idx][2*i - 1]
 
-        if _x < mujoco.mjMAXLINEPNT:
-            self.fig.linedata[line_idx][2*_x] = _x
-            self.fig.linedata[line_idx][2*_x + 1] = float(line_data)
-            self.fig.linepnt[line_idx] += 1
-        else:
-            for i in range(mujoco.mjMAXLINEPNT-1):
-                self.fig.linedata[line_idx][2*i+1] = self.fig.linedata[line_idx][2*(i+1)+1]
-            self.fig.linedata[line_idx][-1] = float(line_data)
-
-    def update_graph_size(self, size_div_x=None, size_div_y=None):
-        if size_div_x is None and size_div_y is None:
-            width, height = glfw.get_framebuffer_size(self.window)
-            width_adjustment = width % 3
-            self.graph_viewport.left = int(2 * width / 3) + width_adjustment
-            self.graph_viewport.width = int(width / 3)
-            self.graph_viewport.height = int(height / 3)
-
-        else:
-            assert size_div_x is not None and size_div_y is None, ""
-            width, height = glfw.get_framebuffer_size(self.window)
-            width_adjustment = width % size_div_x
-            self.graph_viewport.left = (
-                int((size_div_x - 1) * width / size_div_x) + width_adjustment
-            )
-            self.graph_viewport.width = int(width / size_div_x)
-            self.graph_viewport.height = int(height / size_div_x)
+        # assign new
+        fig.linepnt[line_idx] = pnt;
+        fig.linedata[line_idx][1] = line_data;
 
     def add_marker(self, **marker_params):
         self._markers.append(marker_params)
@@ -400,8 +392,18 @@ class MujocoViewer(Callbacks):
             self._create_overlay()
 
             render_start = time.time()
-            self.viewport.width, self.viewport.height = glfw.get_framebuffer_size(
-                self.window)
+
+            width, height = glfw.get_framebuffer_size(self.window)
+            self.viewport.width, self.viewport.height = width, height
+
+            fig_w, fig_h = int(width / 4), int(height / 4)
+            width_adjustment = width % 4
+            for idx in range(len(self.figs_viewport)):
+                x = int(3 * width / 4) + width_adjustment
+                y = idx*fig_h
+                vp = mujoco.MjrRect(x, y, fig_w, fig_h)
+                self.figs_viewport[idx] = vp
+
             with self._gui_lock:
                 # update scene
                 mujoco.mjv_updateScene(
@@ -434,10 +436,10 @@ class MujocoViewer(Callbacks):
 
                 # Handle graph and pausing interactions
                 if not self._hide_graph:
-                    mujoco.mjr_figure(
-                        self.graph_viewport, self.fig, self.ctx
-                    )
-                self.update_graph_size()
+                    for fig, viewport in zip(self.figs, self.figs_viewport):
+                        has_lines = len([i for i in fig.linename if i!=b''])
+                        if has_lines:
+                            mujoco.mjr_figure(viewport, fig, self.ctx)
 
                 glfw.swap_buffers(self.window)
             glfw.poll_events()
