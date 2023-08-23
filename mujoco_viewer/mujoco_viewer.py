@@ -70,8 +70,22 @@ class MujocoViewer(Callbacks):
         self.cam = mujoco.MjvCamera()
         self.scn = mujoco.MjvScene(self.model, maxgeom=10000)
         self.pert = mujoco.MjvPerturb()
+
         self.ctx = mujoco.MjrContext(
             self.model, mujoco.mjtFontScale.mjFONTSCALE_150.value)
+
+        width, height = glfw.get_framebuffer_size(self.window)
+
+        # figures for creating 2D plots
+        max_num_figs = 3
+        self.figs = []
+        width_adjustment = width % 4
+        fig_w, fig_h = int(width / 4), int(height / 4)
+        for idx in range(max_num_figs):
+            fig = mujoco.MjvFigure()
+            mujoco.mjv_defaultFigure(fig)
+            fig.flg_extend = 1
+            self.figs.append(fig)
 
         # load camera from configuration (if available)
         pathlib.Path(
@@ -117,6 +131,51 @@ class MujocoViewer(Callbacks):
         # overlay, markers
         self._overlay = {}
         self._markers = []
+
+    def add_line_to_fig(self, line_name, fig_idx = 0):
+        assert isinstance(line_name, str), \
+            "Line name must be a string."
+
+        fig = self.figs[fig_idx]
+        if line_name.encode('utf8') == b'':
+            raise Exception(
+                "Line name cannot be empty."
+            )
+        if line_name.encode('utf8') in fig.linename:
+            raise Exception(
+                "Line name already exists in this plot."
+            )
+
+        # this assumes all lines added by user have a non-empty name
+        linecount = fig.linename.tolist().index(b'')
+
+        # we want to add the line after the last non-empty index
+        fig.linename[linecount] = line_name
+
+        # assign x values
+        for i in range(mujoco.mjMAXLINEPNT):
+            fig.linedata[linecount][2*i] = -float(i)
+
+    def add_data_to_line(self, line_name, line_data, fig_idx = 0):
+        fig = self.figs[fig_idx]
+
+        try:
+            _line_name = line_name.encode('utf8')
+            linenames = fig.linename.tolist()
+            line_idx = linenames.index(_line_name)
+        except ValueError:
+            raise Exception(
+                "line name is not valid, add it to list before calling update"
+            )
+
+        pnt = min(mujoco.mjMAXLINEPNT, fig.linepnt[line_idx] + 1)
+        # shift data
+        for i in range(pnt-1, 0, -1):
+            fig.linedata[line_idx][2*i + 1] = fig.linedata[line_idx][2*i - 1]
+
+        # assign new
+        fig.linepnt[line_idx] = pnt;
+        fig.linedata[line_idx][1] = line_data;
 
     def add_marker(self, **marker_params):
         self._markers.append(marker_params)
@@ -207,6 +266,10 @@ class MujocoViewer(Callbacks):
             "On" if self._joints else "Off")
         add_overlay(
             topleft,
+            "[G]raph Viewer",
+            "Off" if self._hide_graph else "On")
+        add_overlay(
+            topleft,
             "[I]nertia",
             "On" if self._inertias else "Off")
         add_overlay(
@@ -295,7 +358,6 @@ class MujocoViewer(Callbacks):
         mujoco.mjr_render(self.viewport, self.scn, self.ctx)
         shape = glfw.get_framebuffer_size(self.window)
         
-        
         if depth:
             rgb_img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
             depth_img = np.zeros((shape[1], shape[0], 1), dtype=np.float32)
@@ -324,8 +386,10 @@ class MujocoViewer(Callbacks):
             self._create_overlay()
 
             render_start = time.time()
-            self.viewport.width, self.viewport.height = glfw.get_framebuffer_size(
-                self.window)
+
+            width, height = glfw.get_framebuffer_size(self.window)
+            self.viewport.width, self.viewport.height = width, height
+
             with self._gui_lock:
                 # update scene
                 mujoco.mjv_updateScene(
@@ -355,6 +419,20 @@ class MujocoViewer(Callbacks):
                         t1,
                         t2,
                         self.ctx)
+
+                # handle figures
+                if not self._hide_graph:
+                    for idx, fig in enumerate(self.figs):
+                        width_adjustment = width % 4
+                        x = int(3 * width / 4) + width_adjustment
+                        y = idx * int(height / 4)
+                        viewport = mujoco.MjrRect(
+                            x, y, int(width / 4), int(height / 4))
+
+                        has_lines = len([i for i in fig.linename if i!=b''])
+                        if has_lines:
+                            mujoco.mjr_figure(viewport, fig, self.ctx)
+
                 glfw.swap_buffers(self.window)
             glfw.poll_events()
             self._time_per_render = 0.9 * self._time_per_render + \
