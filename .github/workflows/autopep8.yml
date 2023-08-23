@@ -8,7 +8,7 @@ jobs:
       - name: autopep8
         uses: peter-evans/autopep8@v2.0.0
         with:
-          args: --recursive --in-place $(find . -name "*.py")
+          args: --recursive --in-place .
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4.1.1
         with:
