@@ -132,7 +132,7 @@ class MujocoViewer(Callbacks):
         self._overlay = {}
         self._markers = []
 
-    def add_line_to_fig(self, line_name, fig_idx = 0):
+    def add_line_to_fig(self, line_name, fig_idx=0):
         assert isinstance(line_name, str), \
             "Line name must be a string."
 
@@ -156,7 +156,7 @@ class MujocoViewer(Callbacks):
         for i in range(mujoco.mjMAXLINEPNT):
             fig.linedata[linecount][2*i] = -float(i)
 
-    def add_data_to_line(self, line_name, line_data, fig_idx = 0):
+    def add_data_to_line(self, line_name, line_data, fig_idx=0):
         fig = self.figs[fig_idx]
 
         try:
@@ -174,8 +174,8 @@ class MujocoViewer(Callbacks):
             fig.linedata[line_idx][2*i + 1] = fig.linedata[line_idx][2*i - 1]
 
         # assign new
-        fig.linepnt[line_idx] = pnt;
-        fig.linedata[line_idx][1] = line_data;
+        fig.linepnt[line_idx] = pnt
+        fig.linedata[line_idx][1] = line_data
 
     def add_marker(self, **marker_params):
         self._markers.append(marker_params)
@@ -357,7 +357,7 @@ class MujocoViewer(Callbacks):
         # render
         mujoco.mjr_render(self.viewport, self.scn, self.ctx)
         shape = glfw.get_framebuffer_size(self.window)
-        
+
         if depth:
             rgb_img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
             depth_img = np.zeros((shape[1], shape[0], 1), dtype=np.float32)
@@ -367,7 +367,6 @@ class MujocoViewer(Callbacks):
             img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
             mujoco.mjr_readPixels(img, None, self.viewport, self.ctx)
             return np.flipud(img)
-
 
     def render(self):
         if self.render_mode == 'offscreen':
@@ -429,7 +428,7 @@ class MujocoViewer(Callbacks):
                         viewport = mujoco.MjrRect(
                             x, y, int(width / 4), int(height / 4))
 
-                        has_lines = len([i for i in fig.linename if i!=b''])
+                        has_lines = len([i for i in fig.linename if i != b''])
                         if has_lines:
                             mujoco.mjr_figure(viewport, fig, self.ctx)
 

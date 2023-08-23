@@ -7,9 +7,9 @@ data = mujoco.MjData(model)
 # create the viewer object
 viewer = mujoco_viewer.MujocoViewer(model, data)
 
-viewer.add_line_to_fig(line_name="root-pos-x", fig_idx = 0)
-viewer.add_line_to_fig(line_name="root-pos-z", fig_idx = 0)
-viewer.add_line_to_fig(line_name="right_ankle_y", fig_idx = 1)
+viewer.add_line_to_fig(line_name="root-pos-x", fig_idx=0)
+viewer.add_line_to_fig(line_name="root-pos-z", fig_idx=0)
+viewer.add_line_to_fig(line_name="right_ankle_y", fig_idx=1)
 
 # user has access to mjvFigure
 fig = viewer.figs[0]
@@ -29,8 +29,10 @@ fig.figurergba[3] = 0.2
 
 # simulate and render
 for _ in range(100000):
-    viewer.add_data_to_line(line_name="root-pos-x", line_data=data.qpos[0], fig_idx=0)
-    viewer.add_data_to_line(line_name="root-pos-z", line_data=data.qpos[2], fig_idx=0)
+    viewer.add_data_to_line(line_name="root-pos-x",
+                            line_data=data.qpos[0], fig_idx=0)
+    viewer.add_data_to_line(line_name="root-pos-z",
+                            line_data=data.qpos[2], fig_idx=0)
     viewer.add_data_to_line(line_name="right_ankle_y", line_data=data.qpos[
         mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "right_ankle_y")], fig_idx=1)
 
@@ -41,4 +43,3 @@ for _ in range(100000):
 
 # close
 viewer.close()
-
