@@ -318,8 +318,8 @@ class MujocoViewer(Callbacks):
             bottomleft, "FPS", "%d%s" %
             (1 / self._time_per_render, ""))
         add_overlay(
-            bottomleft, "Solver iterations", str(
-                self.data.solver_iter + 1))
+            bottomleft, "Max solver iters", str(
+                max(self.data.solver_niter) + 1))
         add_overlay(
             bottomleft, "Step", str(
                 round(

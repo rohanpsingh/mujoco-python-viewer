@@ -254,6 +254,7 @@ class Callbacks:
             rely = (self.viewport.height - y) / height
             selpnt = np.zeros((3, 1), dtype=np.float64)
             selgeom = np.zeros((1, 1), dtype=np.int32)
+            selflex = np.zeros((1, 1), dtype=np.int32)
             selskin = np.zeros((1, 1), dtype=np.int32)
             selbody = mujoco.mjv_select(
                 self.model,
@@ -265,7 +266,9 @@ class Callbacks:
                 self.scn,
                 selpnt,
                 selgeom,
-                selskin)
+                selflex,
+                selskin,
+                )
 
             # set lookat point, start tracking is requested
             if selmode == 2 or selmode == 3:
