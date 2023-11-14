@@ -5,7 +5,8 @@ import imageio
 import yaml
 from threading import Lock
 
-MUJOCO_VERSION=tuple(map(int, mujoco.__version__.split('.')))
+MUJOCO_VERSION = tuple(map(int, mujoco.__version__.split('.')))
+
 
 class Callbacks:
     def __init__(self, hide_menus):
@@ -258,7 +259,7 @@ class Callbacks:
             selflex = np.zeros((1, 1), dtype=np.int32)
             selskin = np.zeros((1, 1), dtype=np.int32)
 
-            if MUJOCO_VERSION>=(3,0,0):
+            if MUJOCO_VERSION >= (3, 0, 0):
                 selbody = mujoco.mjv_select(
                     self.model,
                     self.data,
