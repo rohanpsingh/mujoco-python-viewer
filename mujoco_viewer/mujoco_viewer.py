@@ -6,6 +6,7 @@ import pathlib
 import yaml
 from .callbacks import Callbacks
 
+MUJOCO_VERSION=tuple(map(int, mujoco.__version__.split('.')))
 
 class MujocoViewer(Callbacks):
     def __init__(
@@ -317,9 +318,16 @@ class MujocoViewer(Callbacks):
         add_overlay(
             bottomleft, "FPS", "%d%s" %
             (1 / self._time_per_render, ""))
-        add_overlay(
-            bottomleft, "Solver iterations", str(
-                self.data.solver_iter + 1))
+
+        if MUJOCO_VERSION>=(3,0,0):
+            add_overlay(
+                bottomleft, "Max solver iters", str(
+                    max(self.data.solver_niter) + 1))
+        else:
+            add_overlay(
+                bottomleft, "Solver iterations", str(
+                    self.data.solver_iter + 1))
+
         add_overlay(
             bottomleft, "Step", str(
                 round(

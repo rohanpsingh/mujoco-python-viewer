@@ -5,6 +5,7 @@ import imageio
 import yaml
 from threading import Lock
 
+MUJOCO_VERSION=tuple(map(int, mujoco.__version__.split('.')))
 
 class Callbacks:
     def __init__(self, hide_menus):
@@ -254,18 +255,34 @@ class Callbacks:
             rely = (self.viewport.height - y) / height
             selpnt = np.zeros((3, 1), dtype=np.float64)
             selgeom = np.zeros((1, 1), dtype=np.int32)
+            selflex = np.zeros((1, 1), dtype=np.int32)
             selskin = np.zeros((1, 1), dtype=np.int32)
-            selbody = mujoco.mjv_select(
-                self.model,
-                self.data,
-                self.vopt,
-                aspectratio,
-                relx,
-                rely,
-                self.scn,
-                selpnt,
-                selgeom,
-                selskin)
+
+            if MUJOCO_VERSION>=(3,0,0):
+                selbody = mujoco.mjv_select(
+                    self.model,
+                    self.data,
+                    self.vopt,
+                    aspectratio,
+                    relx,
+                    rely,
+                    self.scn,
+                    selpnt,
+                    selgeom,
+                    selflex,
+                    selskin)
+            else:
+                selbody = mujoco.mjv_select(
+                    self.model,
+                    self.data,
+                    self.vopt,
+                    aspectratio,
+                    relx,
+                    rely,
+                    self.scn,
+                    selpnt,
+                    selgeom,
+                    selskin)
 
             # set lookat point, start tracking is requested
             if selmode == 2 or selmode == 3:
